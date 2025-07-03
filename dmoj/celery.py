@@ -1,46 +1,18 @@
-import logging
-import socket
-
+import os
 from celery import Celery
-from celery.schedules import crontab
-from celery.signals import task_failure
+
+# Set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dmoj.docker_settings')
 
 app = Celery('dmoj')
 
-from django.conf import settings  # noqa: E402, I202, django must be imported here
-app.config_from_object(settings, namespace='CELERY')
+# Using a string here means the worker doesn't have to serialize
+# the configuration object to child processes.
+app.config_from_object('django.conf:settings', namespace='CELERY')
 
-if hasattr(settings, 'CELERY_BROKER_URL_SECRET'):
-    app.conf.broker_url = settings.CELERY_BROKER_URL_SECRET
-if hasattr(settings, 'CELERY_RESULT_BACKEND_SECRET'):
-    app.conf.result_backend = settings.CELERY_RESULT_BACKEND_SECRET
-
-# Load task modules from all registered Django app configs.
+# Load task modules from all registered Django apps.
 app.autodiscover_tasks()
 
-# Logger to enable reporting of errors.
-logger = logging.getLogger('judge.celery')
-
-# Load periodic tasks
-app.conf.beat_schedule = {
-    'daily-queue-time-stats': {
-        'task': 'judge.tasks.webhook.queue_time_stats',
-        'schedule': crontab(minute=0, hour=0),
-        'options': {
-            'expires': 60 * 60 * 24,
-        },
-    },
-    'organization-monthly-reset': {
-        'task': 'judge.tasks.organization.organization_monthly_reset',
-        'schedule': crontab(minute=0, hour=0, day_of_month=1),
-        'options': {
-            'expires': 60 * 60 * 24,
-        },
-    },
-}
-
-
-@task_failure.connect()
-def celery_failure_log(sender, task_id, exception, traceback, *args, **kwargs):
-    logger.error('Celery Task %s: %s on %s', sender.name, task_id, socket.gethostname(),  # noqa: G201
-                 exc_info=(type(exception), exception, traceback))
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')

@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dmoj_db_local
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: dmoj
+      MYSQL_USER: dmoj
+      MYSQL_PASSWORD: dmoj123
+      MYSQL_ROOT_PASSWORD: root123
+    volumes:
+      - mysql_data_local:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password --sql_mode=""
+
+  redis:
+    image: redis:7-alpine
+    container_name: dmoj_redis_local
+    restart: unless-stopped
+    volumes:
+      - redis_data_local:/data
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: dmoj_web_local
+    restart: unless-stopped
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: "local-dev-secret-key-not-for-production"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      DB_ENGINE: "django.db.backends.mysql"
+      DB_NAME: "dmoj"
+      DB_USER: "dmoj"
+      DB_PASSWORD: "dmoj123"
+      DB_HOST: "db"
+      DB_PORT: "3306"
+      REDIS_URL: "redis://redis:6379/0"
+      SITE_NAME: "DMOJ Local"
+      SITE_LONG_NAME: "DMOJ Local Development"
+      SITE_ADMIN_EMAIL: "admin@localhost"
+      SITE_FULL_URL: "http://localhost:8000"
+      DJANGO_SETTINGS_MODULE: "dmoj.docker_settings"
+    volumes:
+      - .:/app
+      - static_files_local:/app/static
+      - media_files_local:/app/media
+      - problem_data_local:/app/problems
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    command: bash -c "
+      echo 'Waiting for database...' &&
+      sleep 10 &&
+      echo 'Running migrations...' &&
+      python manage.py migrate --settings=dmoj.docker_settings &&
+      echo 'Collecting static files...' &&
+      python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
+      echo 'Creating superuser and pages...' &&
+      python manage.py shell --settings=dmoj.docker_settings -c 'from django.contrib.auth import get_user_model; from django.contrib.flatpages.models import FlatPage; from django.contrib.sites.models import Site; User = get_user_model(); User.objects.create_superuser(\"admin\", \"admin@localhost\", \"admin\") if not User.objects.filter(username=\"admin\").exists() else None; print(\"Superuser ready\"); about = FlatPage.objects.create(url=\"/about/\", title=\"About\", content=\"Welcome to DMOJ Local\") if not FlatPage.objects.filter(url=\"/about/\").exists() else FlatPage.objects.get(url=\"/about/\"); about.sites.add(Site.objects.get_current()); checkers = FlatPage.objects.create(url=\"/custom_checkers/\", title=\"Custom Checkers\", content=\"Custom checker info\") if not FlatPage.objects.filter(url=\"/custom_checkers/\").exists() else FlatPage.objects.get(url=\"/custom_checkers/\"); checkers.sites.add(Site.objects.get_current()); print(\"Setup completed\")' &&
+      echo 'Starting server...' &&
+      python manage.py runserver 0.0.0.0:8000 --settings=dmoj.docker_settings
+      "
+
+volumes:
+  mysql_data_local:
+  redis_data_local:
+  static_files_local:
+  media_files_local:
+  problem_data_local: 

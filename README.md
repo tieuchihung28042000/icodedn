@@ -1,38 +1,148 @@
-# VNOJ: VNOI Online Judge [![Build Status](https://github.com/VNOI-Admin/OJ/workflows/build/badge.svg)](https://github.com/VNOI-Admin/OJ/actions/) [![AGPL License](https://img.shields.io/badge/license-AGPLv3.0-blue.svg)](http://www.gnu.org/licenses/agpl-3.0) [![Discord link](https://img.shields.io/discord/660930260405190688?color=%237289DA&label=Discord&logo=Discord)](https://discord.com/invite/TDyYVyd)
+# ICODEDN - Online Judge Platform
 
-As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as [VNOI](https://team.vnoi.info/)'s official online judge and hosts its programming contests.
+🚀 **ICODEDN** là một nền tảng chấm bài trực tuyến hiện đại dành cho lập trình thi đấu, được xây dựng dựa trên DMOJ (Don Mills Online Judge).
 
-See it live at [oj.vnoi.info](https://oj.vnoi.info/)!
+## ✨ Tính năng chính
 
-## Features
+- 🏆 **Chấm bài tự động** - Hỗ trợ nhiều ngôn ngữ lập trình
+- 📊 **Bảng xếp hạng** - Theo dõi tiến độ và thành tích
+- 🎯 **Cuộc thi** - Tổ chức các cuộc thi lập trình
+- 👥 **Quản lý người dùng** - Hệ thống tài khoản và phân quyền
+- 📝 **Bài tập đa dạng** - Thư viện bài tập phong phú
+- 🔧 **Custom Checker** - Hỗ trợ kiểm tra tùy chỉnh
 
-Check out its features [here](https://github.com/DMOJ/online-judge#features).
+## 🛠️ Công nghệ sử dụng
 
-## Installation
+- **Backend**: Django (Python)
+- **Database**: MySQL 8.0
+- **Cache**: Redis
+- **Frontend**: HTML, CSS, JavaScript
+- **Deployment**: Docker, Docker Compose
+- **Web Server**: Gunicorn + Nginx
 
-Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
+## 🚀 Triển khai nhanh
 
-### Additional installation steps
+### Yêu cầu hệ thống
+- Docker & Docker Compose
+- 2GB RAM tối thiểu
+- 10GB dung lượng ổ cứng
 
-- You **have to** define `DMOJ_PROBLEM_DATA_ROOT` in `local_settings.py`, which should be the path to the directory that contains your problems' tests.
+### 1. Clone repository
+```bash
+git clone https://github.com/yourusername/icodedn.git
+cd icodedn
+```
 
-- Regarding disabling full-text search, please read [this issue](https://github.com/VNOI-Admin/OJ/issues/4) for more information.
+### 2. Cấu hình môi trường
+```bash
+# Sao chép file cấu hình
+cp production.env.example .env
 
-- To sync the judge server and the site's cache, change the cache framework (`CACHES`) to `memcached` or `redis` instead of the default (local-memory caching).
+# Chỉnh sửa .env với thông tin của bạn
+nano .env
+```
 
-- If you use `python3 manage.py loaddata demo`, the home button in the admin dashboard (/admin) links you to `localhost:8081`, there are 2 ways to change that:
+### 3. Triển khai
+```bash
+# Cho môi trường phát triển
+./deploy-local.sh
 
-  1. You can change that in [demo.json](/judge/fixtures/demo.json)
-  2. You can go to the admin page, scroll down to find the `Sites` setting and change `localhost:8081` to your domain.
+# Cho môi trường production
+./deploy-production.sh
+```
 
-- To support `testlib.h`, you need to copy [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h) to `g++`'s include path in the judge server. To speed up compile time, you can also create a precompiled header for `testlib.h`.
+## 🌐 Truy cập
 
-## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
+- **Website**: https://icodedn.com
+- **Admin Panel**: https://icodedn.com/admin
+- **API**: https://icodedn.com/api/
 
-Take a look at [our contribution guideline](contributing.md).
+## 📋 Cấu hình môi trường
 
-If you find any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688?color=%237289DA&label=Discord&logo=Discord)](https://discord.gg/TDyYVyd) or open an issue.
+### Biến môi trường quan trọng:
 
-Pull requests are welcome as well. Before you submit your PR, please check your code with [flake8](https://flake8.pycqa.org/en/latest/) and format it if needed. There's also `prettier` if you need to format JS code (in `websocket/`).
+```env
+# Site Configuration
+SITE_FULL_URL=https://icodedn.com
+SITE_NAME=ICODEDN
+ALLOWED_HOSTS=icodedn.com,www.icodedn.com
 
-Translation contributions are also welcome.
+# Database
+DB_NAME=dmoj
+DB_USER=dmoj
+DB_PASSWORD=your-strong-password
+
+# Security
+SECRET_KEY=your-secret-key-here
+DEBUG=False
+```
+
+## 🔧 Lệnh hữu ích
+
+```bash
+# Xem logs
+docker compose logs -f
+
+# Khởi động lại
+docker compose restart
+
+# Dừng dịch vụ
+docker compose down
+
+# Truy cập shell
+docker compose exec web bash
+
+# Backup database
+docker compose exec db mysqldump -u root -p dmoj > backup.sql
+```
+
+## 📚 Hướng dẫn sử dụng
+
+### Tạo bài tập mới
+1. Đăng nhập admin panel
+2. Vào **Problems** → **Add Problem**
+3. Điền thông tin bài tập
+4. Upload test cases
+5. Publish bài tập
+
+### Tổ chức cuộc thi
+1. Vào **Contests** → **Add Contest**
+2. Cấu hình thời gian và quy tắc
+3. Thêm bài tập vào cuộc thi
+4. Công bố cuộc thi
+
+## 🛡️ Bảo mật
+
+- ✅ HTTPS bắt buộc
+- ✅ Xác thực 2FA
+- ✅ Rate limiting
+- ✅ SQL injection protection
+- ✅ XSS protection
+
+## 🤝 Đóng góp
+
+Chúng tôi hoan nghênh mọi đóng góp! Vui lòng:
+
+1. Fork repository
+2. Tạo feature branch
+3. Commit changes
+4. Push to branch
+5. Tạo Pull Request
+
+## 📄 License
+
+Dự án này được phân phối dưới giấy phép MIT. Xem file `LICENSE` để biết thêm chi tiết.
+
+## 🔗 Liên kết
+
+- **Website**: https://icodedn.com
+- **Documentation**: https://docs.icodedn.com
+- **Support**: admin@icodedn.com
+
+## 🙏 Cảm ơn
+
+Cảm ơn đội ngũ phát triển [DMOJ](https://github.com/DMOJ/online-judge) đã tạo ra nền tảng tuyệt vời này.
+
+---
+
+Made with ❤️ by ICODEDN Team

@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dmoj_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-dmoj}
+      MYSQL_USER: ${DB_USER:-dmoj}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-dmoj123}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password --sql_mode=""
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: dmoj_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+
+  web:
+    build: .
+    container_name: dmoj_web
+    restart: unless-stopped
+    environment:
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DB_ENGINE: django.db.backends.mysql
+      DB_NAME: ${DB_NAME:-dmoj}
+      DB_USER: ${DB_USER:-dmoj}
+      DB_PASSWORD: ${DB_PASSWORD:-dmoj123}
+      DB_HOST: db
+      DB_PORT: 3306
+      REDIS_URL: redis://redis:6379/0
+      SITE_NAME: ${SITE_NAME:-DMOJ}
+      SITE_LONG_NAME: ${SITE_LONG_NAME:-DMOJ Modern Online Judge}
+      SITE_ADMIN_EMAIL: ${SITE_ADMIN_EMAIL:-admin@example.com}
+      SITE_FULL_URL: ${SITE_FULL_URL:-http://localhost:8000}
+      DJANGO_SETTINGS_MODULE: dmoj.docker_settings
+    volumes:
+      - static_files:/app/static
+      - media_files:/app/media
+      - problem_data:/app/problems
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  celery:
+    build: .
+    container_name: dmoj_celery
+    restart: unless-stopped
+    command: celery -A dmoj worker -l info
+    environment:
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
+      DB_ENGINE: django.db.backends.mysql
+      DB_NAME: ${DB_NAME:-dmoj}
+      DB_USER: ${DB_USER:-dmoj}
+      DB_PASSWORD: ${DB_PASSWORD:-dmoj123}
+      DB_HOST: db
+      DB_PORT: 3306
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: dmoj.docker_settings
+    volumes:
+      - media_files:/app/media
+      - problem_data:/app/problems
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  redis_data:
+  static_files:
+  media_files:
+  problem_data: 

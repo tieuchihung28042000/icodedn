@@ -2,3 +2,5 @@ uwsgi
 websocket-client
 watchdog
 matplotlib
+django-redis
+celery[redis]
