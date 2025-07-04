@@ -61,33 +61,56 @@ create_directories() {
     print_success "Directories created"
 }
 
+# Cleanup old containers and images
+cleanup_old_deployment() {
+    print_status "Cleaning up old deployment..."
+    
+    # Stop and remove existing containers
+    docker compose -f $COMPOSE_FILE down --remove-orphans 2>/dev/null || true
+    
+    # Remove old images to force rebuild
+    docker images | grep "icodedncom" | awk '{print $3}' | xargs docker rmi -f 2>/dev/null || true
+    
+    # Clean up unused volumes (be careful with this)
+    if [ "$MODE" = "production" ]; then
+        print_warning "Keeping database volumes for production"
+    else
+        docker volume prune -f 2>/dev/null || true
+    fi
+    
+    print_success "Cleanup completed"
+}
+
 # Setup environment file
 setup_environment() {
     print_status "Setting up environment..."
     
-    if [ ! -f .env ]; then
-        if [ "$MODE" = "production" ]; then
-            print_warning ".env file not found. Please copy .env.example to .env and configure it for production."
-            print_warning "Make sure to set proper values for:"
-            echo "  - SECRET_KEY (generate a new one)"
-            echo "  - ALLOWED_HOSTS (your domain)"
-            echo "  - SITE_FULL_URL (your domain with https://)"
-            echo "  - Database passwords"
+    if [ "$MODE" = "production" ]; then
+        if [ ! -f .env ]; then
+            print_status "Creating .env from production.env.example..."
+            cp production.env.example .env
+            print_warning "⚠️  IMPORTANT: Please update .env with your production values:"
+            echo "  - SECRET_KEY (generate new one)"
+            echo "  - DB_PASSWORD and MYSQL_ROOT_PASSWORD"
+            echo "  - EMAIL settings if needed"
             echo ""
-            read -p "Do you want to continue with .env.example? (y/N): " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                print_error "Please create .env file first"
-                exit 1
-            fi
-            cp .env.example .env
+            echo "Generate SECRET_KEY with: python3 -c \"import secrets; print(secrets.token_urlsafe(50))\""
+            echo ""
+            read -p "Press Enter to continue after updating .env file..."
         else
-            print_status "Creating .env from .env.example for local development..."
-            cp .env.example .env
-            # Set development-friendly values
-            sed -i 's/DEBUG=False/DEBUG=True/g' .env 2>/dev/null || sed -i '' 's/DEBUG=False/DEBUG=True/g' .env
-            sed -i 's/SITE_FULL_URL=https:\/\/yourdomain.com/SITE_FULL_URL=http:\/\/localhost:8000/g' .env 2>/dev/null || sed -i '' 's/SITE_FULL_URL=https:\/\/yourdomain.com/SITE_FULL_URL=http:\/\/localhost:8000/g' .env
+            print_status "Using existing .env file"
         fi
+    else
+        print_status "Creating .env from production.env.example for local development..."
+        cp production.env.example .env
+        
+        # Set development-friendly values
+        sed -i 's/DEBUG=False/DEBUG=True/g' .env 2>/dev/null || sed -i '' 's/DEBUG=False/DEBUG=True/g' .env
+        sed -i 's/SITE_FULL_URL=https:\/\/icodedn.com/SITE_FULL_URL=http:\/\/localhost:8000/g' .env 2>/dev/null || sed -i '' 's/SITE_FULL_URL=https:\/\/icodedn.com/SITE_FULL_URL=http:\/\/localhost:8000/g' .env
+        sed -i 's/SECURE_SSL_REDIRECT=False/SECURE_SSL_REDIRECT=False/g' .env 2>/dev/null || sed -i '' 's/SECURE_SSL_REDIRECT=False/SECURE_SSL_REDIRECT=False/g' .env
+        sed -i 's/your-strong-database-password-here-change-this/dmoj123/g' .env 2>/dev/null || sed -i '' 's/your-strong-database-password-here-change-this/dmoj123/g' .env
+        sed -i 's/your-strong-root-password-here-change-this/root123/g' .env 2>/dev/null || sed -i '' 's/your-strong-root-password-here-change-this/root123/g' .env
+        sed -i 's/your-super-secret-key-here-change-this-in-production-please-use-50-chars-minimum/local-development-key-not-secure/g' .env 2>/dev/null || sed -i '' 's/your-super-secret-key-here-change-this-in-production-please-use-50-chars-minimum/local-development-key-not-secure/g' .env
     fi
     
     print_success "Environment setup completed"
@@ -100,9 +123,9 @@ deploy_services() {
     # Set Django settings module for Docker
     export DJANGO_SETTINGS_MODULE=dmoj.docker_settings
     
-    # Build images
-    print_status "Building Docker images..."
-    docker compose -f $COMPOSE_FILE build
+    # Build images with no cache to ensure fresh build
+    print_status "Building Docker images (no cache)..."
+    docker compose -f $COMPOSE_FILE build --no-cache
     
     # Start services
     print_status "Starting services..."
@@ -130,6 +153,10 @@ else:
 "
     fi
     
+    # Collect static files
+    print_status "Collecting static files..."
+    docker compose -f $COMPOSE_FILE exec -T web python manage.py collectstatic --noinput --settings=dmoj.docker_settings
+    
     # Load initial data
     print_status "Loading initial data..."
     docker compose -f $COMPOSE_FILE exec -T web python manage.py shell --settings=dmoj.docker_settings -c "
@@ -141,7 +168,7 @@ if not FlatPage.objects.filter(url='/about/').exists():
     about_page = FlatPage.objects.create(
         url='/about/',
         title='About',
-        content='Welcome to DMOJ - Modern Online Judge'
+        content='Welcome to ICODEDN - Modern Online Judge Platform'
     )
     about_page.sites.add(Site.objects.get_current())
 
@@ -173,8 +200,9 @@ show_status() {
         echo "   Website: http://localhost:8000"
         echo "   Admin: http://localhost:8000/admin (admin/admin)"
     else
-        echo "   Website: Check your SITE_FULL_URL in .env"
-        echo "   Admin: {SITE_FULL_URL}/admin"
+        echo "   Website: https://icodedn.com"
+        echo "   Admin: https://icodedn.com/admin"
+        echo "   Internal: http://localhost:8000 (for Cloudflare tunnel)"
     fi
     echo ""
     echo "📊 Useful commands:"
@@ -182,14 +210,19 @@ show_status() {
     echo "   Stop services: docker compose down"
     echo "   Restart: docker compose restart"
     echo "   Shell access: docker compose exec web bash"
+    echo "   Backup database: docker compose exec db mysqldump -u root -p dmoj > backup.sql"
     echo ""
     
     if [ "$MODE" = "production" ]; then
         print_warning "Production deployment notes:"
-        echo "   - Make sure your Cloudflare tunnel points to port 8000"
-        echo "   - Check that all environment variables are properly set"
+        echo "   - Configure Cloudflare tunnel to point to http://localhost:8000"
+        echo "   - Set up nginx reverse proxy if needed"
         echo "   - Monitor logs for any issues: docker compose logs -f"
-        echo "   - Set up regular backups for the database volume"
+        echo "   - Set up regular database backups"
+        echo "   - Configure email settings in .env for notifications"
+        echo ""
+        echo "   Cloudflare tunnel command example:"
+        echo "   cloudflared tunnel --url http://localhost:8000"
     fi
 }
 
@@ -200,6 +233,11 @@ main() {
     
     check_dependencies
     create_directories
+    
+    if [ "$MODE" = "production" ]; then
+        cleanup_old_deployment
+    fi
+    
     setup_environment
     deploy_services
     show_status
@@ -217,8 +255,13 @@ case $MODE in
         print_status "Deploying for production..."
         main
         ;;
+    cleanup)
+        print_status "Cleaning up deployment..."
+        cleanup_old_deployment
+        print_success "Cleanup completed!"
+        ;;
     *)
-        print_error "Invalid mode. Use: ./deploy.sh [local|production]"
+        print_error "Invalid mode. Use: ./deploy.sh [local|production|cleanup]"
         exit 1
         ;;
 esac 
