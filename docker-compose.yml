@@ -108,6 +108,8 @@ services:
         echo 'Database is ready!' &&
         echo 'Running migrations...' &&
         python manage.py migrate --settings=dmoj.docker_settings &&
+        echo 'Building i18n files...' &&
+        python manage.py compilejsi18n --settings=dmoj.docker_settings &&
         echo 'Collecting static files...' &&
         python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
         echo 'Copying static files for nginx...' &&

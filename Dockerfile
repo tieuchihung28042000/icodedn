@@ -29,19 +29,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r additional_requirements.txt
 RUN pip install --no-cache-dir mysqlclient gunicorn
 
-# Copy project
+# Copy project files
 COPY . .
 
 # Create necessary directories
 RUN mkdir -p /app/static /app/media /app/problems /app/logs
 
-    # Install Node.js dependencies and build assets
-    RUN npm install
-    RUN bash make_style.sh
+# Initialize git submodules để lấy static assets
+RUN git submodule update --init --recursive
 
-# Skip collectstatic for now (will do it after container starts)
-# ENV DJANGO_SETTINGS_MODULE=dmoj.docker_settings
-# RUN python manage.py collectstatic --noinput --settings=dmoj.docker_settings
+# Install Node.js dependencies and build CSS
+RUN npm install
+RUN bash make_style.sh
+
+# Build i18n files
+RUN python manage.py compilejsi18n --settings=dmoj.docker_settings || true
+
+# Collect static files
+RUN python manage.py collectstatic --noinput --settings=dmoj.docker_settings || true
 
 # Create non-root user (commented out for local development)
 # RUN useradd --create-home --shell /bin/bash dmoj
@@ -52,4 +57,4 @@ RUN mkdir -p /app/static /app/media /app/problems /app/logs
 EXPOSE 8000
 
 # Default command
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--env", "DJANGO_SETTINGS_MODULE=dmoj.docker_settings", "dmoj.wsgi:application"] 
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120", "--env", "DJANGO_SETTINGS_MODULE=dmoj.docker_settings", "dmoj.wsgi:application"] 
