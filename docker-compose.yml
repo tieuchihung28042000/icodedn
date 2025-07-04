@@ -76,7 +76,6 @@ services:
       - media_files:/app/media
       - problem_data:/app/problems
       - ./logs:/app/logs
-      # Mount for nginx static files
       - ./static:/app/static_mount
       - ./media:/app/media_mount
     ports:
@@ -155,32 +154,7 @@ services:
 
 volumes:
   mysql_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/mysql
   redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/redis
   static_files:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/static
   media_files:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/media
-  problem_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/problems 
+  problem_data: 
