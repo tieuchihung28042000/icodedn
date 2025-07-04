@@ -15,7 +15,15 @@ services:
       - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
-    command: --default-authentication-plugin=mysql_native_password --sql_mode=""
+    command: --default-authentication-plugin=mysql_native_password --sql_mode="" --innodb-buffer-pool-size=128M --max-connections=50
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 400M
+        reservations:
+          cpus: '0.2'
+          memory: 200M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
@@ -29,6 +37,15 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --save 60 1000
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 80M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       timeout: 10s
@@ -59,6 +76,9 @@ services:
       - media_files:/app/media
       - problem_data:/app/problems
       - ./logs:/app/logs
+      # Mount for nginx static files
+      - ./static:/app/static_mount
+      - ./media:/app/media_mount
     ports:
       - "8000:8000"
     depends_on:
@@ -66,17 +86,44 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 400M
+        reservations:
+          cpus: '0.2'
+          memory: 200M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"] 
       timeout: 10s
       retries: 5
       start_period: 30s
+    command: >
+      bash -c "
+        echo 'Waiting for database...' &&
+        while ! mysqladmin ping -h db --silent; do
+          echo 'Waiting for database...'
+          sleep 2
+        done &&
+        echo 'Database is ready!' &&
+        echo 'Running migrations...' &&
+        python manage.py migrate --settings=dmoj.docker_settings &&
+        echo 'Collecting static files...' &&
+        python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
+        echo 'Copying static files for nginx...' &&
+        mkdir -p /app/static_mount /app/media_mount &&
+        cp -r /app/static/* /app/static_mount/ 2>/dev/null || true &&
+        cp -r /app/media/* /app/media_mount/ 2>/dev/null || true &&
+        echo 'Starting Gunicorn server...' &&
+        gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 2 --timeout 60 --max-requests 1000 --max-requests-jitter 100 dmoj.wsgi:application
+      "
 
   celery:
     build: .
     container_name: dmoj_celery
     restart: unless-stopped
-    command: celery -A dmoj worker -l info
+    command: celery -A dmoj worker -l info --concurrency=1 --max-tasks-per-child=1000
     environment:
       DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
@@ -97,10 +144,43 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 120M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
 
 volumes:
   mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/mysql
   redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
   static_files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/static
   media_files:
-  problem_data: 
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/media
+  problem_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/problems 
