@@ -101,6 +101,9 @@ LOGGING = {
 # Email configuration (optional)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Default user language - use CPP17 which exists in language_small.json
+DEFAULT_USER_LANGUAGE = 'CPP17'
+
 # Disable some features that require additional setup
 EVENT_DAEMON_USE = False
 ENABLE_FTS = False 
