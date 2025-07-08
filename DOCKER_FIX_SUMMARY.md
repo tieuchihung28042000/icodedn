@@ -91,7 +91,7 @@ curl -I http://localhost:8000/accounts/register/
 ### 5. Test admin login
 - 🌐 URL: http://localhost:8000/admin/
 - 👤 Username: `admin`
-- 🔑 Password: `@654321`
+- 🔑 Password: `admin123`
 
 ## 📁 Files đã thay đổi
 

@@ -14,14 +14,14 @@
 
 ### 3. Truy cập hệ thống
 - 🌐 **URL**: http://localhost:8000
-- 👤 **Admin**: admin / @654321
+- 👤 **Admin**: admin / admin123
 - 🔗 **Admin Panel**: http://localhost:8000/admin/
 
 ## 📋 Tài khoản mặc định
 
 | Loại | Username | Password | Email |
 |------|----------|----------|-------|
-| Admin | `admin` | `@654321` | `admin@localhost` |
+| Admin | `admin` | `admin123` | `admin@localhost` |
 
 ⚠️ **Quan trọng**: Đổi mật khẩu admin ngay sau khi đăng nhập!
 

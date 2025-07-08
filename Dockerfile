@@ -32,14 +32,14 @@ RUN pip install --no-cache-dir mysqlclient gunicorn
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
 
-# Install Node.js dependencies (including dev dependencies for CSS build)
-RUN npm ci --no-audit
+# Install Node.js dependencies
+RUN npm ci --only=production --no-audit
 
 # Copy project files (excluding files in .dockerignore)
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p /app/static /app/media /app/problems /app/logs /app/sass_processed
+RUN mkdir -p /app/static /app/media /app/problems /app/logs
 
 # Ensure git submodules are properly initialized
 # Note: .git is excluded by .dockerignore, so we need to handle this differently
@@ -56,11 +56,11 @@ RUN ls -la resources/vnoj/ || echo "Warning: resources/vnoj is empty"
 
 # Build CSS files
 RUN if [ -f "make_style.sh" ]; then \
-        echo "Building CSS with make_style.sh..." && \
         chmod +x make_style.sh && \
-        bash make_style.sh || echo "CSS build with make_style.sh failed, continuing..."; \
+        bash make_style.sh; \
     else \
-        echo "make_style.sh not found, skipping CSS build"; \
+        echo "make_style.sh not found, building CSS manually"; \
+        npm run build-css || echo "CSS build failed"; \
     fi
 
 # Verify fixtures exist

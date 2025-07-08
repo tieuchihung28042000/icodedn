@@ -49,7 +49,7 @@ Sau khi deployment, hệ thống sẽ tự động tạo tài khoản admin:
 
 - **URL**: http://localhost:8000/admin/
 - **Username**: `admin`
-- **Password**: `@654321`
+- **Password**: `admin123`
 - **Email**: `admin@localhost`
 
 ⚠️ **Bảo mật**: Hãy đổi mật khẩu admin ngay sau khi đăng nhập lần đầu!
