@@ -43,6 +43,17 @@ Checklist này đảm bảo tất cả các file cần thiết đã được chu
 - [ ] `deploy-production.sh` - Script deployment
 - [ ] `init-fixtures.sh` - Script load fixtures
 
+## 👤 Admin Account
+
+Sau khi deployment, hệ thống sẽ tự động tạo tài khoản admin:
+
+- **URL**: http://localhost:8000/admin/
+- **Username**: `admin`
+- **Password**: `@654321`
+- **Email**: `admin@localhost`
+
+⚠️ **Bảo mật**: Hãy đổi mật khẩu admin ngay sau khi đăng nhập lần đầu!
+
 ## 🚀 Deployment Steps
 
 ### Step 1: Kiểm tra files cần thiết

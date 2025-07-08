@@ -37,8 +37,43 @@ else
 fi
 
 echo ""
-echo -e "${BLUE}📋 Creating superuser (if needed)...${NC}"
-echo "You can create a superuser account with:"
+echo -e "${BLUE}📋 Creating default admin user (if needed)...${NC}"
+$PYTHON_CMD manage.py shell $SETTINGS -c "
+from django.contrib.auth import get_user_model
+from judge.models import Profile, Language
+User = get_user_model()
+
+# Create admin user if not exists
+if not User.objects.filter(username='admin').exists():
+    print('Creating admin user...')
+    admin_user = User.objects.create_superuser('admin', 'admin@localhost', '@654321')
+    print('✅ Admin user created successfully')
+    print('   Username: admin')
+    print('   Password: @654321')
+    print('   Email: admin@localhost')
+else:
+    print('ℹ️ Admin user already exists')
+    admin_user = User.objects.get(username='admin')
+
+# Ensure admin has profile
+if not hasattr(admin_user, 'profile'):
+    try:
+        default_lang = Language.objects.first()
+        if default_lang:
+            profile = Profile(user=admin_user, language=default_lang)
+            profile.save()
+            print('✅ Admin profile created')
+        else:
+            print('⚠️ No languages found, cannot create profile')
+    except Exception as e:
+        print(f'⚠️ Could not create profile: {e}')
+else:
+    print('ℹ️ Admin profile already exists')
+" 2>/dev/null || echo "Could not create admin user - run manually"
+
+echo ""
+echo -e "${BLUE}📋 Manual superuser creation:${NC}"
+echo "If you need to create additional users manually:"
 echo "  docker compose exec web python manage.py createsuperuser --settings=dmoj.docker_settings"
 echo "  OR"
 echo "  python manage.py createsuperuser"

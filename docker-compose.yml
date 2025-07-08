@@ -110,6 +110,8 @@ services:
         python manage.py migrate --settings=dmoj.docker_settings &&
         echo 'Loading language fixtures...' &&
         python manage.py loaddata judge/fixtures/language_small.json --settings=dmoj.docker_settings &&
+        echo 'Creating default admin user...' &&
+        python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.auth import get_user_model; from judge.models import Profile, Language; User = get_user_model(); admin_user = User.objects.create_superuser('admin', 'admin@localhost', '@654321') if not User.objects.filter(username='admin').exists() else User.objects.get(username='admin'); print('Admin user ready'); lang = Language.objects.first(); Profile(user=admin_user, language=lang).save() if lang and not hasattr(admin_user, 'profile') else None; print('Admin profile ready')\" &&
         echo 'Building i18n files...' &&
         python manage.py compilejsi18n --settings=dmoj.docker_settings &&
         echo 'Collecting static files...' &&
