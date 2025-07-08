@@ -117,6 +117,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Default user language - use CPP17 which exists in language_small.json
 DEFAULT_USER_LANGUAGE = 'CPP17'
 
+# Disable password validation for easier development
+AUTH_PASSWORD_VALIDATORS = []
+
 # Disable some features that require additional setup
 EVENT_DAEMON_USE = False
 ENABLE_FTS = False 
