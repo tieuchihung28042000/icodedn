@@ -66,6 +66,10 @@ fi
 echo ""
 echo -e "${BLUE}📋 Step 5: Building Docker images...${NC}"
 echo "This may take several minutes..."
+echo "   - Installing all npm dependencies (including dev dependencies for CSS build)"
+echo "   - Building CSS files with make_style.sh"
+echo "   - Compiling Python dependencies"
+echo "   - Collecting static files"
 docker compose build --no-cache
 
 echo ""
