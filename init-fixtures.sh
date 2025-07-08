@@ -46,10 +46,10 @@ User = get_user_model()
 # Create admin user if not exists
 if not User.objects.filter(username='admin').exists():
     print('Creating admin user...')
-    admin_user = User.objects.create_superuser('admin', 'admin@localhost', 'admin123')
+    admin_user = User.objects.create_superuser('admin', 'admin@localhost', '@654321')
     print('✅ Admin user created successfully')
     print('   Username: admin')
-    print('   Password: admin123')
+    print('   Password: @654321')
     print('   Email: admin@localhost')
 else:
     print('ℹ️ Admin user already exists')

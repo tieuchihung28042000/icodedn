@@ -10,7 +10,20 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = os.environ.get('SECRET_KEY', 'docker-dev-key-change-in-production')
 
 # Allowed hosts
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,icodedn.com').split(',')
+
+# CSRF trusted origins for Django 4.0+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://icodedn.com',
+    'http://icodedn.com',
+]
+
+# Add environment variable support for additional trusted origins
+if os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    additional_origins = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
+    CSRF_TRUSTED_ORIGINS.extend(additional_origins)
 
 # Database configuration
 DATABASES = {
