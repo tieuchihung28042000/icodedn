@@ -122,4 +122,11 @@ AUTH_PASSWORD_VALIDATORS = []
 
 # Disable some features that require additional setup
 EVENT_DAEMON_USE = False
-ENABLE_FTS = False 
+ENABLE_FTS = False
+
+# Disable email verification
+SEND_ACTIVATION_EMAIL = False
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+REGISTRATION_AUTO_LOGIN = True
+ACCOUNT_EMAIL_REQUIRED = False
+REGISTRATION_EMAIL_VERIFICATION = False 
