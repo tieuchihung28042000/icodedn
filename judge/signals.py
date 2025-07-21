@@ -211,3 +211,22 @@ def registration_user_registered(sender, user, request, **kwargs):
         with transaction.atomic():
             user.save()
             profile.save()
+
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@receiver(post_save, sender=User)
+def auto_activate_user(sender, instance, created, **kwargs):
+    """
+    Auto-activate user accounts when they are created.
+    """
+    if created:
+        instance.is_active = True
+        # Avoid recursive signal triggering
+        post_save.disconnect(auto_activate_user, sender=User)
+        instance.save()
+        post_save.connect(auto_activate_user, sender=User)

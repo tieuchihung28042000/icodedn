@@ -137,6 +137,17 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_ACTIVATION_DAYS = 7
 
+# Automatically activate user accounts
+REGISTRATION_BACKEND = 'registration.backends.simple.SimpleBackend'
+REGISTRATION_OPEN = True
+
+# Override django-registration's auto-login behavior
+DMOJ_SIMPLE_REGISTRATION = True
+
+# Override registration-related settings
+DMOJ_REGISTRATION_DISABLE_PASSWORD_VALIDATOR = True
+DMOJ_REGISTRATION_DISABLE_EMAIL_ACTIVATION = True
+
 # Judge server configuration
 DMOJ_JUDGE_SERVERS = {
     'localhost': {

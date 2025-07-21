@@ -8,11 +8,8 @@ class JudgeAppConfig(AppConfig):
     verbose_name = gettext_lazy('Online Judge')
 
     def ready(self):
-        # WARNING: AS THIS IS NOT A FUNCTIONAL PROGRAMMING LANGUAGE,
-        #          OPERATIONS MAY HAVE SIDE EFFECTS.
-        #          DO NOT REMOVE THINKING THE IMPORT IS UNUSED.
-        # noinspection PyUnresolvedReferences
-        from . import signals, jinja2  # noqa: F401, imported for side effects
+        # Import signals to ensure they are registered
+        from . import signals
 
         from judge.models import Language, Profile
         from django.contrib.auth.models import User
