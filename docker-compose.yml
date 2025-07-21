@@ -81,6 +81,7 @@ services:
       - ./media:/app/media_mount
     ports:
       - "8000:8000"
+      - "9999:9999"
     depends_on:
       db:
         condition: service_healthy
@@ -121,6 +122,9 @@ services:
         mkdir -p /app/static_mount /app/media_mount &&
         cp -r /app/static/* /app/static_mount/ 2>/dev/null || true &&
         cp -r /app/media/* /app/media_mount/ 2>/dev/null || true &&
+        echo 'Creating media directories...' &&
+        mkdir -p /app/media/cache /app/media/problem_pdf /app/media/problem_data /app/media/profile_images &&
+        chmod -R 777 /app/media &&
         echo 'Starting judge bridge...' &&
         python manage.py runbridged --settings=dmoj.docker_settings &
         echo 'Starting Gunicorn server...' &&
@@ -154,6 +158,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      web:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -163,11 +169,10 @@ services:
           cpus: '0.05'
           memory: 64M
     healthcheck:
-      test: ["CMD", "celery", "-A", "dmoj", "inspect", "ping", "--timeout=5"]
+      test: ["CMD", "celery", "-A", "dmoj", "inspect", "ping", "-d", "celery@$HOSTNAME"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
 
   judge:
     build:
@@ -178,36 +183,23 @@ services:
     command: >
       bash -c "
         echo 'Waiting for web service...' &&
-        sleep 20 &&
-        echo 'Creating judge user...' &&
-        python manage.py shell --settings=dmoj.docker_settings -c \"from judge.models import Judge; Judge.objects.get_or_create(name='judge1', defaults={'auth_key': 'judge_key', 'description': 'Default judge'})\" &&
-        echo 'Starting local judge...' &&
-        python manage.py runbridged --settings=dmoj.docker_settings &
-        sleep infinity
+        while ! nc -z web 9999; do
+          echo 'Waiting for web service...'
+          sleep 2
+        done &&
+        echo 'Web service is ready!' &&
+        echo 'Creating judge...' &&
+        python manage.py addjudge judge1 localhost 9999 --auth-key=key --settings=dmoj.docker_settings &&
+        echo 'Starting judge...' &&
+        python manage.py runbridged --judge --settings=dmoj.docker_settings
       "
     environment:
-      DEBUG: ${DEBUG:-False}
-      SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
-      DB_ENGINE: django.db.backends.mysql
-      DB_NAME: ${DB_NAME:-dmoj}
-      DB_USER: ${DB_USER:-dmoj}
-      DB_PASSWORD: ${DB_PASSWORD:-dmoj123}
-      DB_HOST: db
-      DB_PORT: 3306
-      REDIS_URL: redis://redis:6379/0
       DJANGO_SETTINGS_MODULE: dmoj.docker_settings
     volumes:
       - problem_data:/app/problems
     depends_on:
-      - web
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 200M
-        reservations:
-          cpus: '0.1'
-          memory: 100M
+      web:
+        condition: service_healthy
 
 volumes:
   mysql_data:
