@@ -1,0 +1,832 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "username": "admin",
+            "first_name": "Administrator",
+            "last_name": "System",
+            "email": "admin@vnoj.local",
+            "is_staff": true,
+            "is_active": true,
+            "is_superuser": true,
+            "date_joined": "2024-01-01T00:00:00Z",
+            "password": "pbkdf2_sha256$320000$test$test"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "username": "teacher1",
+            "first_name": "Nguyễn",
+            "last_name": "Văn A",
+            "email": "teacher1@vnoj.local",
+            "is_staff": false,
+            "is_active": true,
+            "is_superuser": false,
+            "date_joined": "2024-01-02T00:00:00Z",
+            "password": "pbkdf2_sha256$320000$test$test"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 3,
+        "fields": {
+            "username": "student1",
+            "first_name": "Trần",
+            "last_name": "Thị B",
+            "email": "student1@vnoj.local",
+            "is_staff": false,
+            "is_active": true,
+            "is_superuser": false,
+            "date_joined": "2024-01-03T00:00:00Z",
+            "password": "pbkdf2_sha256$320000$test$test"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 4,
+        "fields": {
+            "username": "student2",
+            "first_name": "Lê",
+            "last_name": "Văn C",
+            "email": "student2@vnoj.local",
+            "is_staff": false,
+            "is_active": true,
+            "is_superuser": false,
+            "date_joined": "2024-01-04T00:00:00Z",
+            "password": "pbkdf2_sha256$320000$test$test"
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 1,
+        "fields": {
+            "key": "CPP17",
+            "name": "C++17",
+            "short_name": "C++17",
+            "common_name": "C++",
+            "ace": "c_cpp",
+            "pygments": "cpp",
+            "template": "#include <bits/stdc++.h>\n\nusing namespace std;\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    \n    return 0;\n}",
+            "info": "",
+            "description": "Compile options: g++ -std=c++17 -Wall -O2 -lm",
+            "extension": "cpp",
+            "file_only": false,
+            "file_size_limit": 0,
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 2,
+        "fields": {
+            "key": "PY3",
+            "name": "Python 3",
+            "short_name": "Python 3",
+            "common_name": "Python",
+            "ace": "python",
+            "pygments": "python3",
+            "template": "",
+            "info": "",
+            "description": "Python 3.8+",
+            "extension": "py",
+            "file_only": false,
+            "file_size_limit": 0,
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 3,
+        "fields": {
+            "key": "JAVA8",
+            "name": "Java 8",
+            "short_name": "Java 8",
+            "common_name": "Java",
+            "ace": "java",
+            "pygments": "java",
+            "template": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        \n    }\n}",
+            "info": "",
+            "description": "Java 8 with standard libraries",
+            "extension": "java",
+            "file_only": false,
+            "file_size_limit": 0,
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.organization",
+        "pk": 1,
+        "fields": {
+            "name": "VNOJ: Viet Nam Online Judge",
+            "slug": "vnoj",
+            "short_name": "VNOJ",
+            "about": "Hệ thống chấm bài trực tuyến chính thức của Việt Nam",
+            "creation_date": "2024-01-01T00:00:00Z",
+            "is_open": true,
+            "is_unlisted": false,
+            "slots": null,
+            "access_code": null,
+            "admins": [1]
+        }
+    },
+    {
+        "model": "judge.organization",
+        "pk": 2,
+        "fields": {
+            "name": "Trường THPT ABC",
+            "slug": "thpt-abc",
+            "short_name": "THPT ABC",
+            "about": "Trường Trung học Phổ thông ABC",
+            "creation_date": "2024-01-02T00:00:00Z",
+            "is_open": false,
+            "is_unlisted": false,
+            "slots": 100,
+            "access_code": "ABC2024",
+            "admins": [2]
+        }
+    },
+    {
+        "model": "judge.profile",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "about": "Quản trị viên hệ thống VNOJ",
+            "timezone": "Asia/Ho_Chi_Minh",
+            "language": 1,
+            "points": 0.0,
+            "performance_points": 0.0,
+            "contribution_points": 0,
+            "vnoj_points": 0,
+            "problem_count": 0,
+            "ace_theme": "monokai",
+            "site_theme": "light",
+            "last_access": "2024-01-01T00:00:00Z",
+            "ip": "127.0.0.1",
+            "display_rank": "admin",
+            "organizations": [1]
+        }
+    },
+    {
+        "model": "judge.profile",
+        "pk": 2,
+        "fields": {
+            "user": 2,
+            "about": "Giáo viên Tin học",
+            "timezone": "Asia/Ho_Chi_Minh",
+            "language": 1,
+            "points": 150.0,
+            "performance_points": 120.0,
+            "contribution_points": 50,
+            "vnoj_points": 200,
+            "problem_count": 5,
+            "ace_theme": "github",
+            "site_theme": "light",
+            "last_access": "2024-01-02T00:00:00Z",
+            "ip": "127.0.0.2",
+            "display_rank": "user",
+            "organizations": [1, 2]
+        }
+    },
+    {
+        "model": "judge.profile",
+        "pk": 3,
+        "fields": {
+            "user": 3,
+            "about": "Học sinh lớp 12A1",
+            "timezone": "Asia/Ho_Chi_Minh",
+            "language": 1,
+            "points": 85.0,
+            "performance_points": 75.0,
+            "contribution_points": 10,
+            "vnoj_points": 95,
+            "problem_count": 3,
+            "ace_theme": "monokai",
+            "site_theme": "light",
+            "last_access": "2024-01-03T00:00:00Z",
+            "ip": "127.0.0.3",
+            "display_rank": "user",
+            "organizations": [2]
+        }
+    },
+    {
+        "model": "judge.profile",
+        "pk": 4,
+        "fields": {
+            "user": 4,
+            "about": "Học sinh lớp 11A2",
+            "timezone": "Asia/Ho_Chi_Minh",
+            "language": 2,
+            "points": 45.0,
+            "performance_points": 40.0,
+            "contribution_points": 5,
+            "vnoj_points": 50,
+            "problem_count": 2,
+            "ace_theme": "github",
+            "site_theme": "dark",
+            "last_access": "2024-01-04T00:00:00Z",
+            "ip": "127.0.0.4",
+            "display_rank": "user",
+            "organizations": [2]
+        }
+    },
+    {
+        "model": "judge.problemtype",
+        "pk": 1,
+        "fields": {
+            "name": "basic",
+            "full_name": "Cơ bản"
+        }
+    },
+    {
+        "model": "judge.problemtype",
+        "pk": 2,
+        "fields": {
+            "name": "graph",
+            "full_name": "Đồ thị"
+        }
+    },
+    {
+        "model": "judge.problemtype",
+        "pk": 3,
+        "fields": {
+            "name": "dp",
+            "full_name": "Quy hoạch động"
+        }
+    },
+    {
+        "model": "judge.problemtype",
+        "pk": 4,
+        "fields": {
+            "name": "greedy",
+            "full_name": "Thuật toán tham lam"
+        }
+    },
+    {
+        "model": "judge.problemgroup",
+        "pk": 1,
+        "fields": {
+            "name": "Uncategorized",
+            "full_name": "Chưa phân loại"
+        }
+    },
+    {
+        "model": "judge.problemgroup",
+        "pk": 2,
+        "fields": {
+            "name": "Basic",
+            "full_name": "Cơ bản"
+        }
+    },
+    {
+        "model": "judge.problemgroup",
+        "pk": 3,
+        "fields": {
+            "name": "Advanced",
+            "full_name": "Nâng cao"
+        }
+    },
+    {
+        "model": "judge.problem",
+        "pk": 1,
+        "fields": {
+            "code": "aplusb",
+            "name": "A Plus B",
+            "description": "Cho hai số nguyên A và B. Hãy tính tổng A + B.\n\n## Đầu vào\nDòng đầu tiên chứa hai số nguyên A và B (-10^9 ≤ A, B ≤ 10^9).\n\n## Đầu ra\nIn ra tổng A + B.\n\n## Ví dụ\n**Đầu vào:**\n```\n1 2\n```\n**Đầu ra:**\n```\n3\n```",
+            "authors": [1],
+            "curators": [],
+            "testers": [],
+            "types": [1],
+            "group": 2,
+            "time_limit": 1.0,
+            "memory_limit": 65536,
+            "short_circuit": false,
+            "points": 5.0,
+            "partial": false,
+            "allowed_languages": [1, 2, 3],
+            "is_public": true,
+            "is_manually_managed": false,
+            "date": "2024-01-01T00:00:00Z",
+            "banned_users": [],
+            "license": null,
+            "og_image": "",
+            "summary": "Bài toán cơ bản về phép cộng",
+            "user_count": 2,
+            "ac_rate": 0.8,
+            "is_full_markup": false,
+            "organizations": []
+        }
+    },
+    {
+        "model": "judge.problem",
+        "pk": 2,
+        "fields": {
+            "code": "fibonacci",
+            "name": "Dãy Fibonacci",
+            "description": "Cho số nguyên dương n. Hãy tính số Fibonacci thứ n.\n\n## Đầu vào\nDòng đầu tiên chứa số nguyên n (1 ≤ n ≤ 45).\n\n## Đầu ra\nIn ra số Fibonacci thứ n.\n\n## Ví dụ\n**Đầu vào:**\n```\n5\n```\n**Đầu ra:**\n```\n5\n```",
+            "authors": [2],
+            "curators": [],
+            "testers": [1],
+            "types": [3],
+            "group": 2,
+            "time_limit": 2.0,
+            "memory_limit": 65536,
+            "short_circuit": false,
+            "points": 10.0,
+            "partial": true,
+            "allowed_languages": [1, 2, 3],
+            "is_public": true,
+            "is_manually_managed": false,
+            "date": "2024-01-02T00:00:00Z",
+            "banned_users": [],
+            "license": null,
+            "og_image": "",
+            "summary": "Tính số Fibonacci sử dụng quy hoạch động",
+            "user_count": 1,
+            "ac_rate": 0.6,
+            "is_full_markup": false,
+            "organizations": []
+        }
+    },
+    {
+        "model": "judge.problem",
+        "pk": 3,
+        "fields": {
+            "code": "shortest_path",
+            "name": "Đường đi ngắn nhất",
+            "description": "Cho đồ thị có hướng với n đỉnh và m cạnh. Tìm đường đi ngắn nhất từ đỉnh s đến đỉnh t.\n\n## Đầu vào\nDòng đầu tiên chứa 4 số nguyên n, m, s, t (1 ≤ n ≤ 1000, 1 ≤ m ≤ 10000).\nM dòng tiếp theo, mỗi dòng chứa 3 số u, v, w mô tả cạnh từ u đến v có trọng số w.\n\n## Đầu ra\nIn ra độ dài đường đi ngắn nhất từ s đến t, hoặc -1 nếu không có đường đi.\n\n## Ví dụ\n**Đầu vào:**\n```\n4 5 1 4\n1 2 1\n2 3 2\n3 4 1\n1 3 5\n2 4 3\n```\n**Đầu ra:**\n```\n4\n```",
+            "authors": [1, 2],
+            "curators": [],
+            "testers": [],
+            "types": [2],
+            "group": 3,
+            "time_limit": 3.0,
+            "memory_limit": 131072,
+            "short_circuit": false,
+            "points": 20.0,
+            "partial": true,
+            "allowed_languages": [1, 2, 3],
+            "is_public": true,
+            "is_manually_managed": false,
+            "date": "2024-01-03T00:00:00Z",
+            "banned_users": [],
+            "license": null,
+            "og_image": "",
+            "summary": "Tìm đường đi ngắn nhất trong đồ thị",
+            "user_count": 1,
+            "ac_rate": 0.4,
+            "is_full_markup": false,
+            "organizations": []
+        }
+    },
+    {
+        "model": "judge.contest",
+        "pk": 1,
+        "fields": {
+            "key": "practice_contest_2024",
+            "name": "Cuộc thi luyện tập 2024",
+            "authors": [1, 2],
+            "curators": [],
+            "testers": [],
+            "description": "Cuộc thi luyện tập dành cho học sinh THPT",
+            "start_time": "2024-01-15T09:00:00Z",
+            "end_time": "2024-01-15T12:00:00Z",
+            "time_limit": null,
+            "is_visible": true,
+            "is_rated": true,
+            "rate_all": false,
+            "rate_exclude": null,
+            "is_private": false,
+            "hide_problem_tags": false,
+            "hide_problem_authors": false,
+            "run_pretests_only": false,
+            "is_organization_private": false,
+            "organizations": [2],
+            "og_image": "",
+            "logo_override_image": "",
+            "summary": "",
+            "access_code": "",
+            "banned_users": [],
+            "view_contest_scoreboard": [],
+            "scoreboard_visibility": "V",
+            "use_clarifications": true,
+            "rating_floor": null,
+            "rating_ceiling": null,
+            "rate_limit": null,
+            "points_precision": 0,
+            "locked_after": null,
+            "format_name": "default",
+            "format_config": "{}"
+        }
+    },
+    {
+        "model": "judge.contestproblem",
+        "pk": 1,
+        "fields": {
+            "contest": 1,
+            "problem": 1,
+            "points": 100,
+            "partial": false,
+            "is_pretested": false,
+            "order": 1,
+            "output_prefix_override": 0,
+            "max_submissions": 0
+        }
+    },
+    {
+        "model": "judge.contestproblem",
+        "pk": 2,
+        "fields": {
+            "contest": 1,
+            "problem": 2,
+            "points": 200,
+            "partial": true,
+            "is_pretested": false,
+            "order": 2,
+            "output_prefix_override": 0,
+            "max_submissions": 0
+        }
+    },
+    {
+        "model": "judge.contestparticipation",
+        "pk": 1,
+        "fields": {
+            "contest": 1,
+            "user": 3,
+            "real_start": "2024-01-15T09:00:00Z",
+            "score": 150,
+            "cumtime": 7200,
+            "frozen_score": 150,
+            "frozen_cumtime": 7200,
+            "is_disqualified": false,
+            "tiebreaker": 0.0,
+            "frozen_tiebreaker": 0.0,
+            "virtual": 0,
+            "format_data": null
+        }
+    },
+    {
+        "model": "judge.contestparticipation",
+        "pk": 2,
+        "fields": {
+            "contest": 1,
+            "user": 4,
+            "real_start": "2024-01-15T09:00:00Z",
+            "score": 100,
+            "cumtime": 3600,
+            "frozen_score": 100,
+            "frozen_cumtime": 3600,
+            "is_disqualified": false,
+            "tiebreaker": 0.0,
+            "frozen_tiebreaker": 0.0,
+            "virtual": 0,
+            "format_data": null
+        }
+    },
+    {
+        "model": "judge.submission",
+        "pk": 1,
+        "fields": {
+            "user": 3,
+            "problem": 1,
+            "date": "2024-01-05T10:00:00Z",
+            "time": 0.02,
+            "memory": 1024,
+            "points": 5.0,
+            "language": 1,
+            "status": "D",
+            "result": "AC",
+            "error": null,
+            "current_testcase": 0,
+            "batch": false,
+            "case_points": 5.0,
+            "case_total": 5.0,
+            "judged_on": "2024-01-05T10:00:01Z",
+            "judged_date": "2024-01-05T10:00:01Z",
+            "rejudged_date": null,
+            "is_pretested": false,
+            "contest_object": null,
+            "locked_after": null
+        }
+    },
+    {
+        "model": "judge.submission",
+        "pk": 2,
+        "fields": {
+            "user": 4,
+            "problem": 1,
+            "date": "2024-01-05T11:00:00Z",
+            "time": 0.03,
+            "memory": 1536,
+            "points": 5.0,
+            "language": 2,
+            "status": "D",
+            "result": "AC",
+            "error": null,
+            "current_testcase": 0,
+            "batch": false,
+            "case_points": 5.0,
+            "case_total": 5.0,
+            "judged_on": "2024-01-05T11:00:01Z",
+            "judged_date": "2024-01-05T11:00:01Z",
+            "rejudged_date": null,
+            "is_pretested": false,
+            "contest_object": null,
+            "locked_after": null
+        }
+    },
+    {
+        "model": "judge.submission",
+        "pk": 3,
+        "fields": {
+            "user": 3,
+            "problem": 2,
+            "date": "2024-01-06T14:00:00Z",
+            "time": 0.15,
+            "memory": 2048,
+            "points": 6.0,
+            "language": 1,
+            "status": "D",
+            "result": "AC",
+            "error": null,
+            "current_testcase": 0,
+            "batch": false,
+            "case_points": 6.0,
+            "case_total": 10.0,
+            "judged_on": "2024-01-06T14:00:01Z",
+            "judged_date": "2024-01-06T14:00:01Z",
+            "rejudged_date": null,
+            "is_pretested": false,
+            "contest_object": null,
+            "locked_after": null
+        }
+    },
+    {
+        "model": "judge.submission",
+        "pk": 4,
+        "fields": {
+            "user": 4,
+            "problem": 2,
+            "date": "2024-01-06T15:00:00Z",
+            "time": 1.0,
+            "memory": 3072,
+            "points": 0.0,
+            "language": 2,
+            "status": "D",
+            "result": "TLE",
+            "error": null,
+            "current_testcase": 5,
+            "batch": false,
+            "case_points": 0.0,
+            "case_total": 10.0,
+            "judged_on": "2024-01-06T15:00:01Z",
+            "judged_date": "2024-01-06T15:00:01Z",
+            "rejudged_date": null,
+            "is_pretested": false,
+            "contest_object": null,
+            "locked_after": null
+        }
+    },
+    {
+        "model": "judge.submissionsource",
+        "pk": 1,
+        "fields": {
+            "submission": 1,
+            "source": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b << endl;\n    return 0;\n}"
+        }
+    },
+    {
+        "model": "judge.submissionsource",
+        "pk": 2,
+        "fields": {
+            "submission": 2,
+            "source": "a, b = map(int, input().split())\nprint(a + b)"
+        }
+    },
+    {
+        "model": "judge.submissionsource",
+        "pk": 3,
+        "fields": {
+            "submission": 3,
+            "source": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    vector<int> fib(n + 1);\n    fib[1] = 1;\n    if (n > 1) fib[2] = 1;\n    for (int i = 3; i <= n; i++) {\n        fib[i] = fib[i-1] + fib[i-2];\n    }\n    cout << fib[n] << endl;\n    return 0;\n}"
+        }
+    },
+    {
+        "model": "judge.submissionsource",
+        "pk": 4,
+        "fields": {
+            "submission": 4,
+            "source": "def fibonacci(n):\n    if n <= 2:\n        return 1\n    return fibonacci(n-1) + fibonacci(n-2)\n\nn = int(input())\nprint(fibonacci(n))"
+        }
+    },
+    {
+        "model": "judge.blogpost",
+        "pk": 1,
+        "fields": {
+            "title": "Chào mừng đến với VNOJ",
+            "authors": [1],
+            "slug": "welcome-to-vnoj",
+            "visible": true,
+            "sticky": true,
+            "publish_on": "2024-01-01T00:00:00Z",
+            "content": "Chào mừng bạn đến với VNOJ - Việt Nam Online Judge!\n\nVNOJ là hệ thống chấm bài trực tuyến chính thức của Việt Nam, cung cấp môi trường luyện tập lập trình thi đấu cho học sinh, sinh viên và những người yêu thích lập trình.\n\n## Tính năng chính:\n- Hệ thống chấm bài tự động\n- Hỗ trợ nhiều ngôn ngữ lập trình\n- Tổ chức cuộc thi trực tuyến\n- Thống kê chi tiết về kết quả\n- Cộng đồng lập trình viên Việt Nam",
+            "summary": "Giới thiệu về hệ thống VNOJ",
+            "og_image": "",
+            "score": 0,
+            "global_post": true,
+            "organization": null
+        }
+    },
+    {
+        "model": "judge.blogpost",
+        "pk": 2,
+        "fields": {
+            "title": "Hướng dẫn sử dụng VNOJ cho người mới",
+            "authors": [2],
+            "slug": "guide-for-beginners",
+            "visible": true,
+            "sticky": false,
+            "publish_on": "2024-01-02T00:00:00Z",
+            "content": "## Bước 1: Đăng ký tài khoản\nTruy cập trang chủ và nhấn \"Đăng ký\" để tạo tài khoản mới.\n\n## Bước 2: Giải bài tập đầu tiên\nBắt đầu với bài \"A Plus B\" để làm quen với hệ thống.\n\n## Bước 3: Tham gia cuộc thi\nTham gia các cuộc thi để nâng cao kỹ năng.\n\n## Bước 4: Tương tác với cộng đồng\nTham gia thảo luận và chia sẻ kinh nghiệm.",
+            "summary": "Hướng dẫn chi tiết cho người mới bắt đầu",
+            "og_image": "",
+            "score": 5,
+            "global_post": false,
+            "organization": 2
+        }
+    },
+    {
+        "model": "judge.comment",
+        "pk": 1,
+        "fields": {
+            "author": 3,
+            "time": "2024-01-05T12:00:00Z",
+            "page": "p:1",
+            "score": 2,
+            "body": "Bài này khá đơn giản, chỉ cần đọc hai số và in ra tổng.",
+            "hidden": false,
+            "parent": null,
+            "revisions": 1,
+            "level": 0,
+            "lft": 1,
+            "rght": 4,
+            "tree_id": 1
+        }
+    },
+    {
+        "model": "judge.comment",
+        "pk": 2,
+        "fields": {
+            "author": 4,
+            "time": "2024-01-05T12:30:00Z",
+            "page": "p:1",
+            "score": 1,
+            "body": "Cảm ơn bạn! Mình đã làm được rồi.",
+            "hidden": false,
+            "parent": 1,
+            "revisions": 1,
+            "level": 1,
+            "lft": 2,
+            "rght": 3,
+            "tree_id": 1
+        }
+    },
+    {
+        "model": "judge.comment",
+        "pk": 3,
+        "fields": {
+            "author": 2,
+            "time": "2024-01-06T16:00:00Z",
+            "page": "p:2",
+            "score": 3,
+            "body": "Với bài Fibonacci, các bạn nên sử dụng quy hoạch động thay vì đệ quy để tránh bị TLE.",
+            "hidden": false,
+            "parent": null,
+            "revisions": 1,
+            "level": 0,
+            "lft": 1,
+            "rght": 2,
+            "tree_id": 2
+        }
+    },
+    {
+        "model": "judge.judge",
+        "pk": 1,
+        "fields": {
+            "name": "judge1",
+            "created": "2024-01-01T00:00:00Z",
+            "auth_key": "test_auth_key_1",
+            "is_blocked": false,
+            "is_disabled": false,
+            "tier": 1,
+            "online": true,
+            "start_time": "2024-01-01T00:00:00Z",
+            "ping": 0.05,
+            "load": 0.1,
+            "description": "Judge chính cho hệ thống VNOJ",
+            "last_ip": "127.0.0.1",
+            "problems": [1, 2, 3]
+        }
+    },
+    {
+        "model": "judge.judge",
+        "pk": 2,
+        "fields": {
+            "name": "judge2",
+            "created": "2024-01-01T00:00:00Z",
+            "auth_key": "test_auth_key_2",
+            "is_blocked": false,
+            "is_disabled": false,
+            "tier": 2,
+            "online": true,
+            "start_time": "2024-01-01T00:00:00Z",
+            "ping": 0.08,
+            "load": 0.2,
+            "description": "Judge phụ cho hệ thống VNOJ",
+            "last_ip": "127.0.0.2",
+            "problems": [1, 2]
+        }
+    },
+    {
+        "model": "sites.site",
+        "pk": 1,
+        "fields": {
+            "domain": "vnoj.local",
+            "name": "VNOJ: Viet Nam Online Judge"
+        }
+    },
+    {
+        "model": "judge.navigationbar",
+        "pk": 1,
+        "fields": {
+            "key": "home",
+            "label": "Trang chủ",
+            "path": "/",
+            "order": 1,
+            "regex": "^/$",
+            "parent": null
+        }
+    },
+    {
+        "model": "judge.navigationbar",
+        "pk": 2,
+        "fields": {
+            "key": "problems",
+            "label": "Bài tập",
+            "path": "/problems/",
+            "order": 2,
+            "regex": "^/problems/",
+            "parent": null
+        }
+    },
+    {
+        "model": "judge.navigationbar",
+        "pk": 3,
+        "fields": {
+            "key": "contests",
+            "label": "Cuộc thi",
+            "path": "/contests/",
+            "order": 3,
+            "regex": "^/contests/",
+            "parent": null
+        }
+    },
+    {
+        "model": "judge.navigationbar",
+        "pk": 4,
+        "fields": {
+            "key": "users",
+            "label": "Người dùng",
+            "path": "/users/",
+            "order": 4,
+            "regex": "^/users/",
+            "parent": null
+        }
+    },
+    {
+        "model": "judge.miscconfig",
+        "pk": 1,
+        "fields": {
+            "key": "site_name",
+            "value": "VNOJ: Viet Nam Online Judge"
+        }
+    },
+    {
+        "model": "judge.miscconfig",
+        "pk": 2,
+        "fields": {
+            "key": "site_description",
+            "value": "Hệ thống chấm bài trực tuyến chính thức của Việt Nam"
+        }
+    },
+    {
+        "model": "judge.miscconfig",
+        "pk": 3,
+        "fields": {
+            "key": "logo_url",
+            "value": "/static/logo.png"
+        }
+    }
+] 

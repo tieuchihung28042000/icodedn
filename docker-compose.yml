@@ -121,6 +121,8 @@ services:
         mkdir -p /app/static_mount /app/media_mount &&
         cp -r /app/static/* /app/static_mount/ 2>/dev/null || true &&
         cp -r /app/media/* /app/media_mount/ 2>/dev/null || true &&
+        echo 'Starting judge bridge...' &&
+        python manage.py runbridged --settings=dmoj.docker_settings &
         echo 'Starting Gunicorn server...' &&
         gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 2 --timeout 60 --max-requests 1000 --max-requests-jitter 100 dmoj.wsgi:application
       "
@@ -160,6 +162,52 @@ services:
         reservations:
           cpus: '0.05'
           memory: 64M
+    healthcheck:
+      test: ["CMD", "celery", "-A", "dmoj", "inspect", "ping", "--timeout=5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  judge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dmoj_judge
+    restart: unless-stopped
+    command: >
+      bash -c "
+        echo 'Waiting for web service...' &&
+        sleep 20 &&
+        echo 'Creating judge user...' &&
+        python manage.py shell --settings=dmoj.docker_settings -c \"from judge.models import Judge; Judge.objects.get_or_create(name='judge1', defaults={'auth_key': 'judge_key', 'description': 'Default judge'})\" &&
+        echo 'Starting local judge...' &&
+        python manage.py runbridged --settings=dmoj.docker_settings &
+        sleep infinity
+      "
+    environment:
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
+      DB_ENGINE: django.db.backends.mysql
+      DB_NAME: ${DB_NAME:-dmoj}
+      DB_USER: ${DB_USER:-dmoj}
+      DB_PASSWORD: ${DB_PASSWORD:-dmoj123}
+      DB_HOST: db
+      DB_PORT: 3306
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: dmoj.docker_settings
+    volumes:
+      - problem_data:/app/problems
+    depends_on:
+      - web
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 200M
+        reservations:
+          cpus: '0.1'
+          memory: 100M
 
 volumes:
   mysql_data:

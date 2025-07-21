@@ -1,58 +1,42 @@
 #!/bin/bash
+set -e
 
-echo "🔄 Rebuilding DMOJ Docker with CSS fixes..."
-echo "=============================================="
+echo "===== Rebuilding DMOJ Docker containers ====="
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Kiểm tra xem có thư mục media và static không
+echo "Checking directories..."
+mkdir -p media static problems logs
 
-echo -e "${BLUE}📋 Step 1: Stopping existing containers...${NC}"
-docker compose down
+# Backup dữ liệu hiện tại
+echo "Backing up current data..."
+timestamp=$(date +%Y%m%d_%H%M%S)
+mkdir -p backups/$timestamp
+docker exec dmoj_db mysqldump -u root -p${DB_ROOT_PASSWORD:-root123} ${DB_NAME:-dmoj} > backups/$timestamp/db_backup.sql || echo "Database backup failed, continuing..."
 
-echo ""
-echo -e "${BLUE}📋 Step 2: Rebuilding with CSS fixes...${NC}"
-echo "   - Installing all npm dependencies (including dev dependencies)"
-echo "   - Building CSS with sass and autoprefixer"
-echo "   - This may take a few minutes..."
-docker compose up --build -d
+# Stop các containers hiện tại
+echo "Stopping current containers..."
+docker-compose down || echo "No containers to stop"
 
-echo ""
-echo -e "${BLUE}📋 Step 3: Checking build status...${NC}"
-if docker compose ps | grep -q "Up"; then
-    echo -e "${GREEN}✅ Docker containers are running${NC}"
-else
-    echo -e "${RED}❌ Some containers failed to start${NC}"
-    echo "Check logs with: docker compose logs"
-    exit 1
-fi
+# Rebuild containers
+echo "Building new containers..."
+docker-compose build --no-cache
 
-echo ""
-echo -e "${BLUE}📋 Step 4: Testing web service...${NC}"
-echo "Waiting for web service to be ready..."
-sleep 10
+# Khởi động lại hệ thống
+echo "Starting containers..."
+docker-compose up -d
 
-if curl -f http://localhost:8000/ >/dev/null 2>&1; then
-    echo -e "${GREEN}✅ Web service is responding${NC}"
-else
-    echo -e "${YELLOW}⚠ Web service may still be starting...${NC}"
-    echo "Check logs with: docker compose logs web"
-fi
+# Đợi web service khởi động
+echo "Waiting for web service to start..."
+sleep 30
 
-echo ""
-echo -e "${GREEN}🎉 Rebuild completed!${NC}"
-echo "======================================"
-echo ""
-echo -e "${BLUE}👤 Admin Account:${NC}"
-echo "  🌐 URL: http://localhost:8000"
-echo "  👤 Username: admin"
-echo "  🔑 Password: @654321"
-echo "  🔗 Admin Panel: http://localhost:8000/admin/"
-echo ""
-echo "📋 Useful commands:"
-echo "  View logs:     docker compose logs -f"
-echo "  View web logs: docker compose logs web -f"
-echo "  Stop services: docker compose down" 
+# Kiểm tra trạng thái các containers
+echo "Checking container status..."
+docker-compose ps
+
+# Kiểm tra judge status
+echo "Checking judge status..."
+docker exec -it dmoj_web python manage.py shell -c "from judge.models import Judge; print([(j.name, j.online) for j in Judge.objects.all()])"
+
+echo "===== Rebuild completed ====="
+echo "Check https://icodedn.com/admin/judge/judge/ for judge status"
+echo "If judge is not online, run: docker exec -it dmoj_web python manage.py runbridged &" 
