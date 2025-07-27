@@ -2,7 +2,7 @@
 
 # Script triển khai hoàn chỉnh cho tên miền icodedn.com
 # Tác giả: Claude
-# Phiên bản: 1.2
+# Phiên bản: 1.3
 
 set -e  # Dừng script nếu có lỗi
 
@@ -23,7 +23,7 @@ PROJECT_ROOT=$(pwd)
 echo -e "${GREEN}Thư mục dự án: ${PROJECT_ROOT}${NC}"
 
 # 1. Tạo file .env với cấu hình cho icodedn.com
-echo -e "\n${YELLOW}[1/13] Tạo file .env với cấu hình cho icodedn.com...${NC}"
+echo -e "\n${YELLOW}[1/14] Tạo file .env với cấu hình cho icodedn.com...${NC}"
 cat > "$PROJECT_ROOT/.env" << 'EOL'
 # Cấu hình DMOJ cho icodedn.com
 DEBUG=False
@@ -47,7 +47,7 @@ chmod 600 "$PROJECT_ROOT/.env"
 echo -e "${GREEN}✓ Đã tạo file .env${NC}"
 
 # 2. Tạo file .gitignore để loại bỏ các file local
-echo -e "\n${YELLOW}[2/13] Tạo file .gitignore...${NC}"
+echo -e "\n${YELLOW}[2/14] Tạo file .gitignore...${NC}"
 cat > "$PROJECT_ROOT/.gitignore" << 'EOL'
 # Local development files
 .env
@@ -96,25 +96,64 @@ problem_data/
 EOL
 echo -e "${GREEN}✓ Đã tạo file .gitignore${NC}"
 
-# 3. Dừng các container hiện tại
-echo -e "\n${YELLOW}[3/13] Dừng các container hiện tại...${NC}"
+# 3. Kiểm tra và sửa file init.sql
+echo -e "\n${YELLOW}[3/14] Kiểm tra và sửa file init.sql...${NC}"
+MYSQL_INIT_DIR="$PROJECT_ROOT/docker/mysql"
+MYSQL_INIT_FILE="$MYSQL_INIT_DIR/mysql-init.sql"
+
+if [ -d "$MYSQL_INIT_DIR" ]; then
+    # Kiểm tra xem mysql-init.sql có phải là thư mục không
+    if [ -d "$MYSQL_INIT_FILE" ]; then
+        echo -e "${RED}mysql-init.sql là một thư mục, đang sửa lỗi...${NC}"
+        rm -rf "$MYSQL_INIT_FILE"
+        echo "-- MySQL initialization script for DMOJ
+CREATE DATABASE IF NOT EXISTS dmoj;
+CREATE USER IF NOT EXISTS 'dmoj'@'%' IDENTIFIED BY 'dmoj123';
+GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'%';
+FLUSH PRIVILEGES;" > "$MYSQL_INIT_FILE"
+        echo -e "${GREEN}✓ Đã tạo lại file mysql-init.sql${NC}"
+    elif [ ! -f "$MYSQL_INIT_FILE" ]; then
+        echo -e "${YELLOW}File mysql-init.sql không tồn tại, đang tạo...${NC}"
+        mkdir -p "$MYSQL_INIT_DIR"
+        echo "-- MySQL initialization script for DMOJ
+CREATE DATABASE IF NOT EXISTS dmoj;
+CREATE USER IF NOT EXISTS 'dmoj'@'%' IDENTIFIED BY 'dmoj123';
+GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'%';
+FLUSH PRIVILEGES;" > "$MYSQL_INIT_FILE"
+        echo -e "${GREEN}✓ Đã tạo file mysql-init.sql${NC}"
+    else
+        echo -e "${GREEN}✓ File mysql-init.sql đã tồn tại${NC}"
+    fi
+else
+    echo -e "${YELLOW}Thư mục docker/mysql không tồn tại, đang tạo...${NC}"
+    mkdir -p "$MYSQL_INIT_DIR"
+    echo "-- MySQL initialization script for DMOJ
+CREATE DATABASE IF NOT EXISTS dmoj;
+CREATE USER IF NOT EXISTS 'dmoj'@'%' IDENTIFIED BY 'dmoj123';
+GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'%';
+FLUSH PRIVILEGES;" > "$MYSQL_INIT_FILE"
+    echo -e "${GREEN}✓ Đã tạo thư mục và file mysql-init.sql${NC}"
+fi
+
+# 4. Dừng các container hiện tại
+echo -e "\n${YELLOW}[4/14] Dừng các container hiện tại...${NC}"
 docker compose down || true
 echo -e "${GREEN}✓ Đã dừng các container${NC}"
 
-# 4. Xóa các volume để đảm bảo dữ liệu sạch
-echo -e "\n${YELLOW}[4/13] Xóa các volume cũ...${NC}"
+# 5. Xóa các volume để đảm bảo dữ liệu sạch
+echo -e "\n${YELLOW}[5/14] Xóa các volume cũ...${NC}"
 docker volume ls | grep -E "_mysql_data|_redis_data|_static_files|_media_files|_problem_data" | awk '{print $2}' | xargs -r docker volume rm || true
 echo -e "${GREEN}✓ Đã xóa các volume cũ${NC}"
 
-# 5. Tạo các thư mục cần thiết
-echo -e "\n${YELLOW}[5/13] Tạo các thư mục cần thiết...${NC}"
+# 6. Tạo các thư mục cần thiết
+echo -e "\n${YELLOW}[6/14] Tạo các thư mục cần thiết...${NC}"
 mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/static" "$PROJECT_ROOT/media" "$PROJECT_ROOT/problems"
 # Sử dụng sudo để đảm bảo quyền truy cập đầy đủ
 sudo chmod -R 777 "$PROJECT_ROOT/logs" "$PROJECT_ROOT/static" "$PROJECT_ROOT/media" "$PROJECT_ROOT/problems"
 echo -e "${GREEN}✓ Đã tạo và cấp quyền cho các thư mục cần thiết${NC}"
 
-# 6. Tạo file cấu hình Django để sửa lỗi compressor
-echo -e "\n${YELLOW}[6/13] Tạo file cấu hình Django để sửa lỗi compressor...${NC}"
+# 7. Tạo file cấu hình Django để sửa lỗi compressor
+echo -e "\n${YELLOW}[7/14] Tạo file cấu hình Django để sửa lỗi compressor...${NC}"
 cat > "$PROJECT_ROOT/fix_settings.py" << 'EOL'
 #!/usr/bin/env python3
 import os
@@ -184,8 +223,8 @@ EOL
 chmod +x "$PROJECT_ROOT/fix_settings.py"
 echo -e "${GREEN}✓ Đã tạo file cấu hình Django${NC}"
 
-# 7. Tạo script để tạo site
-echo -e "\n${YELLOW}[7/13] Tạo script để tạo site...${NC}"
+# 8. Tạo script để tạo site
+echo -e "\n${YELLOW}[8/14] Tạo script để tạo site...${NC}"
 cat > "$PROJECT_ROOT/create_site.py" << 'EOL'
 #!/usr/bin/env python3
 import os
@@ -253,8 +292,8 @@ EOL
 chmod +x "$PROJECT_ROOT/create_site.py"
 echo -e "${GREEN}✓ Đã tạo script tạo site${NC}"
 
-# 8. Sửa Dockerfile để tránh lỗi quyền truy cập
-echo -e "\n${YELLOW}[8/13] Sửa Dockerfile để tránh lỗi quyền truy cập...${NC}"
+# 9. Sửa Dockerfile để tránh lỗi quyền truy cập
+echo -e "\n${YELLOW}[9/14] Sửa Dockerfile để tránh lỗi quyền truy cập...${NC}"
 if [ -f "$PROJECT_ROOT/Dockerfile" ]; then
     # Tạo bản sao lưu của Dockerfile
     cp "$PROJECT_ROOT/Dockerfile" "$PROJECT_ROOT/Dockerfile.bak"
@@ -267,23 +306,53 @@ else
     echo -e "${RED}✗ Không tìm thấy Dockerfile${NC}"
 fi
 
-# 9. Xây dựng lại các container
-echo -e "\n${YELLOW}[9/13] Xây dựng lại các container...${NC}"
+# 10. Kiểm tra và sửa docker-compose.yml
+echo -e "\n${YELLOW}[10/14] Kiểm tra và sửa docker-compose.yml...${NC}"
+DOCKER_COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+if [ -f "$DOCKER_COMPOSE_FILE" ]; then
+    # Tạo bản sao lưu của docker-compose.yml
+    cp "$DOCKER_COMPOSE_FILE" "${DOCKER_COMPOSE_FILE}.bak"
+    
+    # Kiểm tra xem có đường dẫn init.sql đúng không
+    if grep -q "mysql-init.sql" "$DOCKER_COMPOSE_FILE"; then
+        echo -e "${GREEN}✓ Đã có cấu hình init.sql trong docker-compose.yml${NC}"
+    else
+        echo -e "${YELLOW}Đang thêm cấu hình init.sql vào docker-compose.yml...${NC}"
+        # Thay thế cấu hình db để thêm volume cho init.sql
+        sed -i 's/\(services:\s*\n\s*db:\s*\n\s*image:\s*mysql:8.0\)/services:\n  db:\n    image: mysql:8.0\n    volumes:\n      - mysql_data:\/var\/lib\/mysql\n      - .\/docker\/mysql\/mysql-init.sql:\/docker-entrypoint-initdb.d\/mysql-init.sql/g' "$DOCKER_COMPOSE_FILE"
+        echo -e "${GREEN}✓ Đã thêm cấu hình init.sql vào docker-compose.yml${NC}"
+    fi
+else
+    echo -e "${RED}✗ Không tìm thấy docker-compose.yml${NC}"
+fi
+
+# 11. Xây dựng lại các container
+echo -e "\n${YELLOW}[11/14] Xây dựng lại các container...${NC}"
 docker compose build
 echo -e "${GREEN}✓ Đã xây dựng lại các container${NC}"
 
-# 10. Khởi động các container
-echo -e "\n${YELLOW}[10/13] Khởi động các container...${NC}"
+# 12. Khởi động các container
+echo -e "\n${YELLOW}[12/14] Khởi động các container...${NC}"
 docker compose up -d
 echo -e "${GREEN}✓ Đã khởi động các container${NC}"
 
-# 11. Đợi database khởi động
-echo -e "\n${YELLOW}[11/13] Đợi database khởi động hoàn tất (30 giây)...${NC}"
-sleep 30
+# 13. Đợi database khởi động
+echo -e "\n${YELLOW}[13/14] Đợi database khởi động hoàn tất (60 giây)...${NC}"
+# Đợi MySQL khởi động
+for i in {1..60}; do
+    if docker compose exec -T db mysqladmin ping -h localhost -u root --password="$DB_ROOT_PASSWORD" --silent > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ MySQL đã sẵn sàng sau ${i} giây${NC}"
+        break
+    fi
+    if [ $i -eq 60 ]; then
+        echo -e "${RED}✗ MySQL không khởi động được sau 60 giây${NC}"
+    fi
+    sleep 1
+done
 echo -e "${GREEN}✓ Đã đợi đủ thời gian${NC}"
 
-# 12. Chạy migrations và sửa lỗi
-echo -e "\n${YELLOW}[12/13] Chạy migrations và sửa lỗi...${NC}"
+# 14. Chạy migrations và sửa lỗi
+echo -e "\n${YELLOW}[14/14] Chạy migrations và sửa lỗi...${NC}"
 # Chạy migrations
 docker compose exec -T web python manage.py migrate --settings=dmoj.docker_settings || echo "Lỗi khi chạy migrations"
 
@@ -300,8 +369,8 @@ docker compose exec -T web python manage.py collectstatic --noinput --settings=d
 
 echo -e "${GREEN}✓ Đã chạy migrations và sửa lỗi${NC}"
 
-# 13. Khởi động lại container web
-echo -e "\n${YELLOW}[13/13] Khởi động lại container web...${NC}"
+# Khởi động lại container web
+echo -e "\n${YELLOW}Khởi động lại container web...${NC}"
 docker compose restart web
 echo -e "${GREEN}✓ Đã khởi động lại container web${NC}"
 
@@ -316,8 +385,9 @@ echo -e "${GREEN}Truy cập trang web tại: https://icodedn.com${NC}"
 echo -e "${BLUE}==================================================${NC}"
 
 echo -e "\n${YELLOW}Nếu vẫn gặp lỗi, hãy thử các lệnh sau:${NC}"
-echo -e "1. Kiểm tra logs: ${GREEN}docker compose logs web${NC}"
-echo -e "2. Khởi động lại container: ${GREEN}docker compose restart web${NC}"
-echo -e "3. Kiểm tra quyền truy cập: ${GREEN}sudo chown -R $(whoami):$(whoami) $PROJECT_ROOT/static $PROJECT_ROOT/media${NC}"
-echo -e "4. Tạo site thủ công: ${GREEN}docker compose exec web python -c \"from django.contrib.sites.models import Site; Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')\"${NC}"
-echo -e "5. Sửa lỗi compressor: ${GREEN}docker compose exec web python -c \"import re; from django.conf import settings; print('CompressorFinder' in settings.STATICFILES_FINDERS)\"${NC}" 
+echo -e "1. Kiểm tra logs: ${GREEN}docker compose logs${NC}"
+echo -e "2. Kiểm tra logs MySQL: ${GREEN}docker compose logs db${NC}"
+echo -e "3. Khởi động lại container: ${GREEN}docker compose restart web${NC}"
+echo -e "4. Kiểm tra quyền truy cập: ${GREEN}sudo chown -R $(whoami):$(whoami) $PROJECT_ROOT/static $PROJECT_ROOT/media${NC}"
+echo -e "5. Tạo site thủ công: ${GREEN}docker compose exec web python -c \"from django.contrib.sites.models import Site; Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')\"${NC}"
+echo -e "6. Sửa lỗi compressor: ${GREEN}docker compose exec web python -c \"import re; from django.conf import settings; print('CompressorFinder' in settings.STATICFILES_FINDERS)\"${NC}" 

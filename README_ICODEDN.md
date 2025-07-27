@@ -7,6 +7,7 @@ Tài liệu này hướng dẫn cách triển khai hệ thống DMOJ (Online Jud
 1. **deploy_icodedn.sh**: Script chính để triển khai toàn bộ hệ thống
 2. **fix_settings.py**: Script được tạo tự động để sửa lỗi cấu hình Django
 3. **create_site.py**: Script được tạo tự động để tạo site mặc định
+4. **docker/mysql/mysql-init.sql**: Script khởi tạo cơ sở dữ liệu MySQL
 
 ## Các bước triển khai
 
@@ -35,19 +36,36 @@ sudo ./deploy_icodedn.sh
 Script này sẽ thực hiện các công việc sau:
 - Tạo file .env với cấu hình cho icodedn.com
 - Tạo file .gitignore để loại bỏ các file local
+- Kiểm tra và sửa file init.sql cho MySQL
 - Dừng các container hiện tại
 - Xóa các volume cũ
 - Tạo các thư mục cần thiết và cấp quyền đúng
 - Tạo file cấu hình Django để sửa lỗi compressor
 - Tạo script để tạo site mặc định
 - Sửa Dockerfile để tránh lỗi quyền truy cập
+- Kiểm tra và sửa docker-compose.yml
 - Xây dựng và khởi động các container
+- Đợi database khởi động (với kiểm tra kết nối)
 - Chạy migrations và sửa lỗi
 - Khởi động lại container web
 
 ## Xử lý lỗi phổ biến
 
-### 1. Lỗi Site.DoesNotExist
+### 1. Lỗi MySQL init.sql
+
+Lỗi: `ERROR: Can't initialize batch_readline - may be the input source is a directory or a block device.`
+
+Khắc phục: Script sẽ tự động kiểm tra và sửa file init.sql. Nếu cần sửa thủ công:
+```bash
+mkdir -p docker/mysql
+echo "-- MySQL initialization script for DMOJ
+CREATE DATABASE IF NOT EXISTS dmoj;
+CREATE USER IF NOT EXISTS 'dmoj'@'%' IDENTIFIED BY 'dmoj123';
+GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'%';
+FLUSH PRIVILEGES;" > docker/mysql/mysql-init.sql
+```
+
+### 2. Lỗi Site.DoesNotExist
 
 Lỗi: `django.contrib.sites.models.Site.DoesNotExist: Site matching query does not exist.`
 
@@ -62,7 +80,7 @@ Hoặc tạo site thủ công:
 docker compose exec web python -c "from django.contrib.sites.models import Site; Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')"
 ```
 
-### 2. Lỗi Django Compressor
+### 3. Lỗi Django Compressor
 
 Lỗi: `django.core.exceptions.ImproperlyConfigured: When using Django Compressor together with staticfiles, please add 'compressor.finders.CompressorFinder' to the STATICFILES_FINDERS setting.`
 
@@ -72,7 +90,7 @@ docker compose cp fix_settings.py web:/app/
 docker compose exec web python /app/fix_settings.py
 ```
 
-### 3. Lỗi quyền truy cập (Permission denied)
+### 4. Lỗi quyền truy cập (Permission denied)
 
 Nếu gặp lỗi "Operation not permitted" hoặc "Permission denied":
 
@@ -81,12 +99,13 @@ sudo chown -R $(whoami):$(whoami) /path/to/icodedn.com/static /path/to/icodedn.c
 sudo chmod -R 777 /path/to/icodedn.com/static /path/to/icodedn.com/media
 ```
 
-### 4. Lỗi container unhealthy
+### 5. Lỗi container unhealthy
 
 Kiểm tra logs:
 
 ```bash
-docker compose logs web
+docker compose logs
+docker compose logs db
 ```
 
 Khởi động lại container:
@@ -95,7 +114,7 @@ Khởi động lại container:
 docker compose restart web
 ```
 
-### 5. Lỗi bridge address
+### 6. Lỗi bridge address
 
 Lỗi: `TypeError: bind(): AF_INET address must be tuple, not str`
 
@@ -114,6 +133,9 @@ docker compose exec web python /app/fix_settings.py
 ├── .gitignore            # File gitignore
 ├── fix_settings.py       # Script sửa lỗi cấu hình
 ├── create_site.py        # Script tạo site mặc định
+├── docker/
+│   └── mysql/
+│       └── mysql-init.sql # Script khởi tạo MySQL
 ├── logs/                 # Thư mục chứa log
 ├── static/               # Thư mục chứa static files
 ├── media/                # Thư mục chứa media files
@@ -147,6 +169,7 @@ docker compose restart
 ```bash
 docker compose logs -f web
 docker compose logs -f judge
+docker compose logs -f db
 ```
 
 ### Cập nhật code
