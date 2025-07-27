@@ -5,7 +5,8 @@ Tài liệu này hướng dẫn cách triển khai hệ thống DMOJ (Online Jud
 ## Các file cấu hình
 
 1. **deploy_icodedn.sh**: Script chính để triển khai toàn bộ hệ thống
-2. **fix_bridge.py**: Script được tạo tự động để sửa lỗi judge bridge
+2. **fix_settings.py**: Script được tạo tự động để sửa lỗi cấu hình Django
+3. **create_site.py**: Script được tạo tự động để tạo site mặc định
 
 ## Các bước triển khai
 
@@ -37,16 +38,41 @@ Script này sẽ thực hiện các công việc sau:
 - Dừng các container hiện tại
 - Xóa các volume cũ
 - Tạo các thư mục cần thiết và cấp quyền đúng
+- Tạo file cấu hình Django để sửa lỗi compressor
+- Tạo script để tạo site mặc định
 - Sửa Dockerfile để tránh lỗi quyền truy cập
 - Xây dựng và khởi động các container
-- Kiểm tra trạng thái container và khởi động lại nếu cần
-- Tạo và chạy script sửa lỗi bridge
-- Chạy migrations
-- Tạo site mặc định
+- Chạy migrations và sửa lỗi
+- Khởi động lại container web
 
 ## Xử lý lỗi phổ biến
 
-### 1. Lỗi quyền truy cập (Permission denied)
+### 1. Lỗi Site.DoesNotExist
+
+Lỗi: `django.contrib.sites.models.Site.DoesNotExist: Site matching query does not exist.`
+
+Khắc phục: Script `create_site.py` được tạo tự động để sửa lỗi này. Nếu cần chạy lại:
+```bash
+docker compose cp create_site.py web:/app/
+docker compose exec web python /app/create_site.py
+```
+
+Hoặc tạo site thủ công:
+```bash
+docker compose exec web python -c "from django.contrib.sites.models import Site; Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')"
+```
+
+### 2. Lỗi Django Compressor
+
+Lỗi: `django.core.exceptions.ImproperlyConfigured: When using Django Compressor together with staticfiles, please add 'compressor.finders.CompressorFinder' to the STATICFILES_FINDERS setting.`
+
+Khắc phục: Script `fix_settings.py` được tạo tự động để sửa lỗi này. Nếu cần chạy lại:
+```bash
+docker compose cp fix_settings.py web:/app/
+docker compose exec web python /app/fix_settings.py
+```
+
+### 3. Lỗi quyền truy cập (Permission denied)
 
 Nếu gặp lỗi "Operation not permitted" hoặc "Permission denied":
 
@@ -55,7 +81,7 @@ sudo chown -R $(whoami):$(whoami) /path/to/icodedn.com/static /path/to/icodedn.c
 sudo chmod -R 777 /path/to/icodedn.com/static /path/to/icodedn.com/media
 ```
 
-### 2. Lỗi container unhealthy
+### 4. Lỗi container unhealthy
 
 Kiểm tra logs:
 
@@ -69,30 +95,14 @@ Khởi động lại container:
 docker compose restart web
 ```
 
-### 3. Lỗi bridge address
+### 5. Lỗi bridge address
 
 Lỗi: `TypeError: bind(): AF_INET address must be tuple, not str`
 
-Khắc phục: Script `fix_bridge.py` được tạo tự động để sửa lỗi này. Nếu cần chạy lại:
+Khắc phục: Script `fix_settings.py` được tạo tự động để sửa lỗi này. Nếu cần chạy lại:
 ```bash
-docker compose cp fix_bridge.py web:/app/
-docker compose exec web python /app/fix_bridge.py
-```
-
-### 4. Lỗi site không tồn tại
-
-Lỗi: `django.contrib.sites.models.Site.DoesNotExist: Site matching query does not exist.`
-
-Khắc phục: Tạo site mặc định:
-```bash
-docker compose exec web python -c "
-import os
-import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dmoj.docker_settings')
-django.setup()
-from django.contrib.sites.models import Site
-Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')
-"
+docker compose cp fix_settings.py web:/app/
+docker compose exec web python /app/fix_settings.py
 ```
 
 ## Cấu trúc thư mục
@@ -102,6 +112,8 @@ Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')
 ├── docker-compose.yml    # File cấu hình Docker Compose
 ├── .env                  # File cấu hình môi trường
 ├── .gitignore            # File gitignore
+├── fix_settings.py       # Script sửa lỗi cấu hình
+├── create_site.py        # Script tạo site mặc định
 ├── logs/                 # Thư mục chứa log
 ├── static/               # Thư mục chứa static files
 ├── media/                # Thư mục chứa media files
