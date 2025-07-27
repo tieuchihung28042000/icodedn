@@ -56,7 +56,7 @@ services:
     container_name: dmoj_web
     restart: always
     environment:
-      DEBUG: ${DEBUG:-False}
+      DEBUG: ${DEBUG:-True}
       SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,icodedn.com}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://icodedn.com,http://icodedn.com}
@@ -77,6 +77,9 @@ services:
       - ./media:/app/media
       - ./problems:/app/problems
       - ./logs:/app/logs
+      - ./fix_container.py:/app/fix_container.py
+      - ./fix_site.py:/app/fix_site.py
+      - ./fix_static.py:/app/fix_static.py
     ports:
       - "8000:8000"
       - "9999:9999"
@@ -114,7 +117,7 @@ services:
         echo 'Creating default admin user...' &&
         python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.auth import get_user_model; from judge.models import Profile, Language; User = get_user_model(); admin_user = User.objects.create_superuser('admin', 'admin@localhost', '@654321') if not User.objects.filter(username='admin').exists() else User.objects.get(username='admin'); print('Admin user ready'); lang = Language.objects.first(); Profile(user=admin_user, language=lang).save() if lang and not hasattr(admin_user, 'profile') else None; print('Admin profile ready')\" &&
         echo 'Setting up Django Site...' &&
-        python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.sites.models import Site; Site.objects.update_or_create(id=1, defaults={'domain': 'icodedn.com', 'name': 'iCodeDN'})\" &&
+        python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.sites.models import Site; Site.objects.update_or_create(id=1, defaults={'domain': 'icodedn.com', 'name': 'iCodeDN'}); print('Site created/updated successfully')\" &&
         echo 'Activating all existing users...' &&
         python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_active=False).update(is_active=True); print('All users activated')\" &&
         echo 'Building i18n files...' &&
@@ -122,10 +125,12 @@ services:
         echo 'Collecting static files...' &&
         python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
         echo 'Compressing static files...' &&
-        python manage.py compress --settings=dmoj.docker_settings &&
+        python manage.py compress --force --settings=dmoj.docker_settings &&
         echo 'Creating media directories...' &&
         mkdir -p /app/media/cache /app/media/problem_pdf /app/media/problem_data /app/media/profile_images &&
         chmod -R 777 /app/media &&
+        echo 'Running fix scripts...' &&
+        python /app/fix_container.py &&
         echo 'Starting judge bridge...' &&
         python manage.py runbridged --settings=dmoj.docker_settings &
         echo 'Starting Gunicorn server...' &&
@@ -138,7 +143,7 @@ services:
     restart: always
     command: celery -A dmoj worker -l info --concurrency=1 --max-tasks-per-child=1000
     environment:
-      DEBUG: ${DEBUG:-False}
+      DEBUG: ${DEBUG:-True}
       SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,icodedn.com}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://icodedn.com,http://icodedn.com}
