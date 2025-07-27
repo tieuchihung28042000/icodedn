@@ -82,6 +82,7 @@ services:
     ports:
       - "8000:8000"
       - "9999:9999"
+      - "9998:9998"
     depends_on:
       db:
         condition: service_healthy
@@ -114,6 +115,8 @@ services:
         python manage.py loaddata judge/fixtures/language_small.json --settings=dmoj.docker_settings &&
         echo 'Creating default admin user...' &&
         python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.auth import get_user_model; from judge.models import Profile, Language; User = get_user_model(); admin_user = User.objects.create_superuser('admin', 'admin@localhost', '@654321') if not User.objects.filter(username='admin').exists() else User.objects.get(username='admin'); print('Admin user ready'); lang = Language.objects.first(); Profile(user=admin_user, language=lang).save() if lang and not hasattr(admin_user, 'profile') else None; print('Admin profile ready')\" &&
+        echo 'Setting up Django Site...' &&
+        python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.sites.models import Site; Site.objects.update_or_create(id=1, defaults={'domain': 'icodedn.com', 'name': 'iCodeDN'})\" &&
         echo 'Activating all existing users...' &&
         python manage.py shell --settings=dmoj.docker_settings -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_active=False).update(is_active=True); print('All users activated')\" &&
         echo 'Building i18n files...' &&
@@ -191,7 +194,7 @@ services:
         done &&
         echo 'Web service is ready!' &&
         echo 'Creating judge...' &&
-        python manage.py addjudge judge1 localhost 9999 --auth-key=key --settings=dmoj.docker_settings &&
+        python manage.py addjudge judge1 web 9999 --auth-key=key --settings=dmoj.docker_settings &&
         echo 'Starting judge...' &&
         python manage.py runbridged --judge --settings=dmoj.docker_settings
       "

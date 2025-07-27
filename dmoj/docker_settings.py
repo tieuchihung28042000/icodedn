@@ -25,6 +25,9 @@ if os.environ.get('CSRF_TRUSTED_ORIGINS'):
     additional_origins = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
     CSRF_TRUSTED_ORIGINS.extend(additional_origins)
 
+# Site configuration
+SITE_ID = 1  # Make sure this is set to 1 for Django Sites framework
+
 # Database configuration
 DATABASES = {
     'default': {
@@ -125,8 +128,8 @@ EVENT_DAEMON_USE = False
 ENABLE_FTS = False
 
 # Bridge configuration
-BRIDGED_JUDGE_ADDRESS = ('localhost', 9999)
-BRIDGED_DJANGO_ADDRESS = ('localhost', 9998)
+BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
+BRIDGED_DJANGO_ADDRESS = [('localhost', 9998)]
 BRIDGED_DJANGO_CONNECT = None
 
 # Disable email verification and auto-activate accounts
@@ -150,9 +153,9 @@ DMOJ_REGISTRATION_DISABLE_EMAIL_ACTIVATION = True
 
 # Judge server configuration
 DMOJ_JUDGE_SERVERS = {
-    'localhost': {
+    'judge1': {
         'auth': 'key',
-        'host': 'localhost',
+        'host': 'web',
         'port': 9999,
     },
 } 
