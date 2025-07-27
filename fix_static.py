@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+git #!/usr/bin/env python3
 import os
 import shutil
 from django.conf import settings
