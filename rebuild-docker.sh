@@ -15,15 +15,15 @@ docker exec dmoj_db mysqldump -u root -p${DB_ROOT_PASSWORD:-root123} ${DB_NAME:-
 
 # Stop các containers hiện tại
 echo "Stopping current containers..."
-docker-compose down || echo "No containers to stop"
+docker compose down || echo "No containers to stop"
 
 # Rebuild containers
 echo "Building new containers..."
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Khởi động lại hệ thống
 echo "Starting containers..."
-docker-compose up -d
+docker compose up -d
 
 # Đợi web service khởi động
 echo "Waiting for web service to start..."
@@ -31,7 +31,7 @@ sleep 30
 
 # Kiểm tra trạng thái các containers
 echo "Checking container status..."
-docker-compose ps
+docker compose ps
 
 # Kiểm tra judge status
 echo "Checking judge status..."
