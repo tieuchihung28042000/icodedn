@@ -5,8 +5,7 @@ Tài liệu này hướng dẫn cách triển khai hệ thống DMOJ (Online Jud
 ## Các file cấu hình
 
 1. **deploy_icodedn.sh**: Script chính để triển khai toàn bộ hệ thống
-2. **fix_judge_bridge.py**: Script sửa lỗi judge bridge
-3. **fix_static_files.py**: Script sửa lỗi static files
+2. **fix_bridge.py**: Script được tạo tự động để sửa lỗi judge bridge
 
 ## Các bước triển khai
 
@@ -26,65 +25,61 @@ cd icodedn
 
 ### 3. Triển khai hệ thống
 
-Chạy script triển khai:
+Chạy script triển khai với quyền sudo (để có thể cấp quyền cho các thư mục):
 
 ```bash
-chmod +x deploy_icodedn.sh
-./deploy_icodedn.sh
+sudo ./deploy_icodedn.sh
 ```
 
 Script này sẽ thực hiện các công việc sau:
 - Tạo file .env với cấu hình cho icodedn.com
+- Tạo file .gitignore để loại bỏ các file local
 - Dừng các container hiện tại
 - Xóa các volume cũ
-- Tạo các thư mục cần thiết
+- Tạo các thư mục cần thiết và cấp quyền đúng
+- Sửa Dockerfile để tránh lỗi quyền truy cập
 - Xây dựng và khởi động các container
+- Kiểm tra trạng thái container và khởi động lại nếu cần
+- Tạo và chạy script sửa lỗi bridge
 - Chạy migrations
-- Sửa lỗi judge bridge và static files
 - Tạo site mặc định
 
-## Cấu trúc thư mục
+## Xử lý lỗi phổ biến
 
+### 1. Lỗi quyền truy cập (Permission denied)
+
+Nếu gặp lỗi "Operation not permitted" hoặc "Permission denied":
+
+```bash
+sudo chown -R $(whoami):$(whoami) /path/to/icodedn.com/static /path/to/icodedn.com/media
+sudo chmod -R 777 /path/to/icodedn.com/static /path/to/icodedn.com/media
 ```
-/home/chihung2k/sites/icodedn.com/
-├── docker-compose.yml    # File cấu hình Docker Compose
-├── .env                  # File cấu hình môi trường
-├── logs/                 # Thư mục chứa log
-├── static/               # Thư mục chứa static files
-├── media/                # Thư mục chứa media files
-└── problems/             # Thư mục chứa dữ liệu bài tập
+
+### 2. Lỗi container unhealthy
+
+Kiểm tra logs:
+
+```bash
+docker compose logs web
 ```
 
-## Cấu hình Docker
+Khởi động lại container:
 
-File `docker-compose.yml` định nghĩa các service:
-- **db**: MySQL database
-- **redis**: Redis cache
-- **web**: Web server (Django)
-- **celery**: Celery worker
-- **judge**: Judge server
+```bash
+docker compose restart web
+```
 
-## Các lỗi thường gặp và cách khắc phục
-
-### 1. Lỗi bridge address
+### 3. Lỗi bridge address
 
 Lỗi: `TypeError: bind(): AF_INET address must be tuple, not str`
 
-Khắc phục: Chạy script `fix_judge_bridge.py` để sửa cấu hình bridge:
+Khắc phục: Script `fix_bridge.py` được tạo tự động để sửa lỗi này. Nếu cần chạy lại:
 ```bash
-docker compose exec web python /app/fix_judge_bridge.py
+docker compose cp fix_bridge.py web:/app/
+docker compose exec web python /app/fix_bridge.py
 ```
 
-### 2. Lỗi static files
-
-Lỗi: Thiếu các file CSS, JavaScript, hình ảnh
-
-Khắc phục: Chạy script `fix_static_files.py` để sao chép các file từ resources vào static:
-```bash
-docker compose exec web python /app/fix_static_files.py
-```
-
-### 3. Lỗi site không tồn tại
+### 4. Lỗi site không tồn tại
 
 Lỗi: `django.contrib.sites.models.Site.DoesNotExist: Site matching query does not exist.`
 
@@ -99,6 +94,28 @@ from django.contrib.sites.models import Site
 Site.objects.create(id=1, domain='icodedn.com', name='iCodeDN')
 "
 ```
+
+## Cấu trúc thư mục
+
+```
+/home/chihung2k/sites/icodedn.com/
+├── docker-compose.yml    # File cấu hình Docker Compose
+├── .env                  # File cấu hình môi trường
+├── .gitignore            # File gitignore
+├── logs/                 # Thư mục chứa log
+├── static/               # Thư mục chứa static files
+├── media/                # Thư mục chứa media files
+└── problems/             # Thư mục chứa dữ liệu bài tập
+```
+
+## Cấu hình Docker
+
+File `docker-compose.yml` định nghĩa các service:
+- **db**: MySQL database
+- **redis**: Redis cache
+- **web**: Web server (Django)
+- **celery**: Celery worker
+- **judge**: Judge server
 
 ## Kiểm tra hệ thống
 

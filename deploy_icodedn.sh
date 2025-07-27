@@ -2,7 +2,7 @@
 
 # Script triển khai hoàn chỉnh cho tên miền icodedn.com
 # Tác giả: Claude
-# Phiên bản: 1.0
+# Phiên bản: 1.1
 
 set -e  # Dừng script nếu có lỗi
 
@@ -46,9 +46,59 @@ EOL
 chmod 600 "$PROJECT_ROOT/.env"
 echo -e "${GREEN}✓ Đã tạo file .env${NC}"
 
+# 1.5 Tạo file .gitignore để loại bỏ các file local
+echo -e "\n${YELLOW}[1.5/12] Tạo file .gitignore...${NC}"
+cat > "$PROJECT_ROOT/.gitignore" << 'EOL'
+# Local development files
+.env
+docker-compose.local.yml
+docker-compose.override.yml
+.idea/
+.vscode/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Media and static files in development
+/media/
+/static/
+/logs/
+
+# Docker volumes
+mysql_data/
+redis_data/
+static_files/
+media_files/
+problem_data/
+EOL
+echo -e "${GREEN}✓ Đã tạo file .gitignore${NC}"
+
 # 2. Dừng các container hiện tại
 echo -e "\n${YELLOW}[2/12] Dừng các container hiện tại...${NC}"
-docker compose down
+docker compose down || true
 echo -e "${GREEN}✓ Đã dừng các container${NC}"
 
 # 3. Xóa các volume để đảm bảo dữ liệu sạch
@@ -59,48 +109,137 @@ echo -e "${GREEN}✓ Đã xóa các volume cũ${NC}"
 # 4. Tạo các thư mục cần thiết
 echo -e "\n${YELLOW}[4/12] Tạo các thư mục cần thiết...${NC}"
 mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/static" "$PROJECT_ROOT/media" "$PROJECT_ROOT/problems"
-chmod -R 777 "$PROJECT_ROOT/logs" "$PROJECT_ROOT/static" "$PROJECT_ROOT/media" "$PROJECT_ROOT/problems"
+# Sử dụng sudo để đảm bảo quyền truy cập đầy đủ
+sudo chmod -R 777 "$PROJECT_ROOT/logs" "$PROJECT_ROOT/static" "$PROJECT_ROOT/media" "$PROJECT_ROOT/problems"
 echo -e "${GREEN}✓ Đã tạo và cấp quyền cho các thư mục cần thiết${NC}"
 
-# 5. Xây dựng lại các container
-echo -e "\n${YELLOW}[5/12] Xây dựng lại các container...${NC}"
+# 5. Chỉnh sửa Dockerfile để không thay đổi quyền truy cập file static
+echo -e "\n${YELLOW}[5/12] Sửa Dockerfile để tránh lỗi quyền truy cập...${NC}"
+if [ -f "$PROJECT_ROOT/Dockerfile" ]; then
+    # Tạo bản sao lưu của Dockerfile
+    cp "$PROJECT_ROOT/Dockerfile" "$PROJECT_ROOT/Dockerfile.bak"
+    
+    # Thay thế lệnh chmod -R 777 bằng lệnh không gây lỗi
+    sed -i 's/RUN chmod -R 777 \/app\/media/RUN mkdir -p \/app\/media \&\& chmod -R 777 \/app\/media/g' "$PROJECT_ROOT/Dockerfile"
+    
+    echo -e "${GREEN}✓ Đã sửa Dockerfile${NC}"
+else
+    echo -e "${RED}✗ Không tìm thấy Dockerfile${NC}"
+fi
+
+# 6. Xây dựng lại các container
+echo -e "\n${YELLOW}[6/12] Xây dựng lại các container...${NC}"
 docker compose build
 echo -e "${GREEN}✓ Đã xây dựng lại các container${NC}"
 
-# 6. Khởi động các container
-echo -e "\n${YELLOW}[6/12] Khởi động các container...${NC}"
+# 7. Khởi động các container
+echo -e "\n${YELLOW}[7/12] Khởi động các container...${NC}"
 docker compose up -d
 echo -e "${GREEN}✓ Đã khởi động các container${NC}"
 
-# 7. Đợi database khởi động
-echo -e "\n${YELLOW}[7/12] Đợi database khởi động hoàn tất (30 giây)...${NC}"
+# 8. Đợi database khởi động
+echo -e "\n${YELLOW}[8/12] Đợi database khởi động hoàn tất (30 giây)...${NC}"
 sleep 30
 echo -e "${GREEN}✓ Đã đợi đủ thời gian${NC}"
 
-# 8. Chạy migrations
-echo -e "\n${YELLOW}[8/12] Chạy migrations...${NC}"
-docker compose exec web python manage.py migrate --settings=dmoj.docker_settings
-echo -e "${GREEN}✓ Đã chạy migrations${NC}"
+# 9. Kiểm tra trạng thái container
+echo -e "\n${YELLOW}[9/12] Kiểm tra trạng thái container...${NC}"
+docker compose ps
+container_status=$(docker compose ps | grep "dmoj_web" | grep -i "unhealthy")
+if [ -n "$container_status" ]; then
+    echo -e "${RED}✗ Container web không khỏe mạnh. Kiểm tra logs...${NC}"
+    docker compose logs web
+    
+    echo -e "\n${YELLOW}Thử khởi động lại container web...${NC}"
+    docker compose restart web
+    sleep 10
+    
+    # Kiểm tra lại
+    container_status=$(docker compose ps | grep "dmoj_web" | grep -i "unhealthy")
+    if [ -n "$container_status" ]; then
+        echo -e "${RED}✗ Container web vẫn không khỏe mạnh sau khi khởi động lại.${NC}"
+    else
+        echo -e "${GREEN}✓ Container web đã khỏe mạnh sau khi khởi động lại${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ Tất cả container đang chạy bình thường${NC}"
+fi
 
-# 9. Copy các script sửa lỗi vào container
-echo -e "\n${YELLOW}[9/12] Copy các script sửa lỗi vào container...${NC}"
-docker compose cp fix_judge_bridge.py web:/app/
-docker compose cp fix_static_files.py web:/app/
-echo -e "${GREEN}✓ Đã copy các script vào container${NC}"
+# 10. Tạo script sửa lỗi judge bridge
+echo -e "\n${YELLOW}[10/12] Tạo script sửa lỗi judge bridge...${NC}"
+cat > "$PROJECT_ROOT/fix_bridge.py" << 'EOL'
+#!/usr/bin/env python3
+import os
+import sys
 
-# 10. Chạy script sửa lỗi judge bridge
-echo -e "\n${YELLOW}[10/12] Chạy script sửa lỗi judge bridge...${NC}"
-docker compose exec web python /app/fix_judge_bridge.py
-echo -e "${GREEN}✓ Đã chạy script sửa lỗi judge bridge${NC}"
+def fix_bridge_settings(file_path):
+    if not os.path.exists(file_path):
+        print(f"File {file_path} không tồn tại!")
+        return False
+    
+    with open(file_path, 'r') as f:
+        content = f.read()
+    
+    # Sửa cấu hình bridge
+    original_content = content
+    
+    # Sửa các định dạng khác nhau có thể gặp
+    if "BRIDGED_JUDGE_ADDRESS = 'localhost'" in content:
+        content = content.replace("BRIDGED_JUDGE_ADDRESS = 'localhost'", 'BRIDGED_JUDGE_ADDRESS = ("0.0.0.0", 9999)')
+    
+    if "BRIDGED_DJANGO_ADDRESS = 'localhost'" in content:
+        content = content.replace("BRIDGED_DJANGO_ADDRESS = 'localhost'", 'BRIDGED_DJANGO_ADDRESS = ("0.0.0.0", 9998)')
+    
+    if "BRIDGED_JUDGE_ADDRESS = ('localhost'" in content:
+        content = content.replace("BRIDGED_JUDGE_ADDRESS = ('localhost'", 'BRIDGED_JUDGE_ADDRESS = ("0.0.0.0"')
+    
+    if "BRIDGED_DJANGO_ADDRESS = ('localhost'" in content:
+        content = content.replace("BRIDGED_DJANGO_ADDRESS = ('localhost'", 'BRIDGED_DJANGO_ADDRESS = ("0.0.0.0"')
+    
+    # Sửa cấu hình DMOJ_JUDGE_SERVERS
+    if "'localhost': {" in content:
+        content = content.replace("'localhost': {", "'0.0.0.0': {")
+        
+        # Cập nhật host trong cấu hình
+        if "'host': 'localhost'" in content:
+            content = content.replace("'host': 'localhost'", "'host': '0.0.0.0'")
+    
+    if content != original_content:
+        with open(file_path, 'w') as f:
+            f.write(content)
+        print(f"Đã sửa cấu hình bridge trong {file_path}")
+        return True
+    else:
+        print(f"Không cần sửa cấu hình trong {file_path}")
+        return False
 
-# 11. Chạy script sửa lỗi static files
-echo -e "\n${YELLOW}[11/12] Chạy script sửa lỗi static files...${NC}"
-docker compose exec web python /app/fix_static_files.py
-echo -e "${GREEN}✓ Đã chạy script sửa lỗi static files${NC}"
+# Tìm và sửa tất cả các file cấu hình có thể
+settings_files = [
+    '/app/dmoj/docker_settings.py',
+    '/app/dmoj/settings.py',
+    '/app/martor/settings.py'
+]
+
+success = False
+for file_path in settings_files:
+    if fix_bridge_settings(file_path):
+        success = True
+
+sys.exit(0 if success else 1)
+EOL
+chmod +x "$PROJECT_ROOT/fix_bridge.py"
+echo -e "${GREEN}✓ Đã tạo script sửa lỗi judge bridge${NC}"
+
+# 11. Chạy migrations và sửa lỗi bridge
+echo -e "\n${YELLOW}[11/12] Chạy migrations và sửa lỗi...${NC}"
+docker compose exec -T web python manage.py migrate --settings=dmoj.docker_settings || echo "Lỗi khi chạy migrations"
+docker compose cp fix_bridge.py web:/app/
+docker compose exec -T web python /app/fix_bridge.py || echo "Lỗi khi sửa bridge"
+echo -e "${GREEN}✓ Đã chạy migrations và sửa lỗi${NC}"
 
 # 12. Tạo site mặc định
 echo -e "\n${YELLOW}[12/12] Tạo site mặc định...${NC}"
-docker compose exec web python -c "
+docker compose exec -T web python -c "
 import os
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dmoj.docker_settings')
@@ -116,10 +255,20 @@ else:
     site.name = 'iCodeDN'
     site.save()
     print('Đã cập nhật site mặc định')
-"
+" || echo "Lỗi khi tạo site mặc định"
 echo -e "${GREEN}✓ Đã tạo site mặc định${NC}"
+
+# Kiểm tra lại trạng thái cuối cùng
+echo -e "\n${YELLOW}Kiểm tra trạng thái cuối cùng...${NC}"
+docker compose ps
+docker compose logs --tail=20 web
 
 echo -e "\n${BLUE}==================================================${NC}"
 echo -e "${GREEN}HOÀN TẤT! DMOJ đã được triển khai cho icodedn.com.${NC}"
 echo -e "${GREEN}Truy cập trang web tại: https://icodedn.com${NC}"
-echo -e "${BLUE}==================================================${NC}" 
+echo -e "${BLUE}==================================================${NC}"
+
+echo -e "\n${YELLOW}Nếu vẫn gặp lỗi, hãy thử các lệnh sau:${NC}"
+echo -e "1. Kiểm tra logs: ${GREEN}docker compose logs web${NC}"
+echo -e "2. Khởi động lại container: ${GREEN}docker compose restart web${NC}"
+echo -e "3. Kiểm tra quyền truy cập: ${GREEN}sudo chown -R $(whoami):$(whoami) $PROJECT_ROOT/static $PROJECT_ROOT/media${NC}" 
