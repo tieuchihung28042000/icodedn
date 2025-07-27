@@ -125,8 +125,8 @@ EVENT_DAEMON_USE = False
 ENABLE_FTS = False
 
 # Bridge configuration
-BRIDGED_JUDGE_ADDRESS = ('0.0.0.0', 9999)
-BRIDGED_DJANGO_ADDRESS = ('0.0.0.0', 9998)
+BRIDGED_JUDGE_ADDRESS = ('localhost', 9999)
+BRIDGED_DJANGO_ADDRESS = ('localhost', 9998)
 BRIDGED_DJANGO_CONNECT = None
 
 # Disable email verification and auto-activate accounts
@@ -150,8 +150,9 @@ DMOJ_REGISTRATION_DISABLE_EMAIL_ACTIVATION = True
 
 # Judge server configuration
 DMOJ_JUDGE_SERVERS = {
-    'judge1': {
+    'localhost': {
         'auth': 'key',
-        'key': 'key',
+        'host': 'localhost',
+        'port': 9999,
     },
 } 

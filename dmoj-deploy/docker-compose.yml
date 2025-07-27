@@ -46,8 +46,6 @@ services:
       - ./problems:/problems
     ports:
       - "8000:8000"
-      - "9999:9999"
-      - "9998:9998"
     command: >
       bash -c "
         echo 'Waiting for database...' &&
@@ -99,8 +97,6 @@ services:
     container_name: dmoj_judge
     restart: always
     privileged: true
-    depends_on:
-      - web
     volumes:
       - ./problems:/problems
     environment:
