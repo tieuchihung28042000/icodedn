@@ -4,7 +4,7 @@ from .settings import *
 # Override settings for Docker environment
 
 # Debug mode
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True  # Tạm thời bật debug để dễ xác định lỗi
 
 # Secret key
 SECRET_KEY = os.environ.get('SECRET_KEY', 'docker-dev-key-change-in-production')
@@ -27,6 +27,21 @@ if os.environ.get('CSRF_TRUSTED_ORIGINS'):
 
 # Site configuration
 SITE_ID = 1  # Make sure this is set to 1 for Django Sites framework
+
+# Static files configuration
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+)
+
+# Compressor configuration
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = False
+COMPRESS_PRECOMPILERS = (
+    ('text/x-scss', 'django_libsass.SassCompiler'),
+)
+COMPRESS_OUTPUT_DIR = 'cache'
 
 # Database configuration
 DATABASES = {

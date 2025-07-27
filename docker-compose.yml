@@ -1,10 +1,10 @@
-version: '3.8'
+name: icodedncom
 
 services:
   db:
     image: mysql:8.0
     container_name: dmoj_db
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_DATABASE: ${DB_NAME:-dmoj}
       MYSQL_USER: ${DB_USER:-dmoj}
@@ -32,7 +32,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: dmoj_redis
-    restart: unless-stopped
+    restart: always
     volumes:
       - redis_data:/data
     ports:
@@ -54,7 +54,7 @@ services:
   web:
     build: .
     container_name: dmoj_web
-    restart: unless-stopped
+    restart: always
     environment:
       DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY:-docker-dev-key}
@@ -123,6 +123,8 @@ services:
         python manage.py compilejsi18n --settings=dmoj.docker_settings &&
         echo 'Collecting static files...' &&
         python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
+        echo 'Compressing static files...' &&
+        python manage.py compress --settings=dmoj.docker_settings &&
         echo 'Copying static files for nginx...' &&
         mkdir -p /app/static_mount /app/media_mount &&
         cp -r /app/static/* /app/static_mount/ 2>/dev/null || true &&
@@ -139,7 +141,7 @@ services:
   celery:
     build: .
     container_name: dmoj_celery
-    restart: unless-stopped
+    restart: always
     command: celery -A dmoj worker -l info --concurrency=1 --max-tasks-per-child=1000
     environment:
       DEBUG: ${DEBUG:-False}
@@ -184,7 +186,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dmoj_judge
-    restart: unless-stopped
+    restart: always
     command: >
       bash -c "
         echo 'Waiting for web service...' &&

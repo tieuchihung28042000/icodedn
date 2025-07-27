@@ -32,7 +32,7 @@ COPY requirements.txt additional_requirements.txt ./
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r additional_requirements.txt
-RUN pip install --no-cache-dir mysqlclient gunicorn
+RUN pip install --no-cache-dir mysqlclient gunicorn django-libsass
 
 # Copy package.json and package-lock.json for Node.js dependencies
 COPY package.json package-lock.json ./
@@ -78,6 +78,9 @@ RUN python manage.py compilejsi18n --settings=dmoj.docker_settings || echo "i18n
 
 # Collect static files
 RUN python manage.py collectstatic --noinput --settings=dmoj.docker_settings || echo "Static collection failed"
+
+# Compress static files
+RUN python manage.py compress --settings=dmoj.docker_settings || echo "Static compression failed"
                             
 # Verify static files were created
 RUN ls -la /app/static/ || echo "Static files directory is empty"
