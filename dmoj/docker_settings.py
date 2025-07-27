@@ -150,9 +150,8 @@ DMOJ_REGISTRATION_DISABLE_EMAIL_ACTIVATION = True
 
 # Judge server configuration
 DMOJ_JUDGE_SERVERS = {
-    'localhost': {
+    'judge1': {
         'auth': 'key',
-        'host': 'localhost',
-        'port': 9999,
+        'key': 'key',
     },
 } 
