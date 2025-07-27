@@ -11,7 +11,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD:-dmoj123}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql-data:/var/lib/mysql
       - ./docker/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
@@ -34,7 +34,7 @@ services:
     container_name: dmoj_redis
     restart: always
     volumes:
-      - redis_data:/data
+      - ./redis-data:/data
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --save 60 1000
@@ -73,12 +73,10 @@ services:
       SITE_FULL_URL: ${SITE_FULL_URL:-http://localhost:8000}
       DJANGO_SETTINGS_MODULE: dmoj.docker_settings
     volumes:
-      - static_files:/app/static
-      - media_files:/app/media
-      - problem_data:/app/problems
+      - ./static:/app/static
+      - ./media:/app/media
+      - ./problems:/app/problems
       - ./logs:/app/logs
-      - ./static:/app/static_mount
-      - ./media:/app/media_mount
     ports:
       - "8000:8000"
       - "9999:9999"
@@ -125,10 +123,6 @@ services:
         python manage.py collectstatic --noinput --settings=dmoj.docker_settings &&
         echo 'Compressing static files...' &&
         python manage.py compress --settings=dmoj.docker_settings &&
-        echo 'Copying static files for nginx...' &&
-        mkdir -p /app/static_mount /app/media_mount &&
-        cp -r /app/static/* /app/static_mount/ 2>/dev/null || true &&
-        cp -r /app/media/* /app/media_mount/ 2>/dev/null || true &&
         echo 'Creating media directories...' &&
         mkdir -p /app/media/cache /app/media/problem_pdf /app/media/problem_data /app/media/profile_images &&
         chmod -R 777 /app/media &&
@@ -157,8 +151,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       DJANGO_SETTINGS_MODULE: dmoj.docker_settings
     volumes:
-      - media_files:/app/media
-      - problem_data:/app/problems
+      - ./media:/app/media
+      - ./problems:/app/problems
       - ./logs:/app/logs
     depends_on:
       db:
@@ -203,14 +197,11 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: dmoj.docker_settings
     volumes:
-      - problem_data:/app/problems
+      - ./problems:/app/problems
     depends_on:
       web:
         condition: service_healthy
 
 volumes:
-  mysql_data:
-  redis_data:
-  static_files:
-  media_files:
-  problem_data: 
+  mysql-data:
+  redis-data: 
