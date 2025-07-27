@@ -7,9 +7,6 @@ Tài liệu này hướng dẫn cách triển khai hệ thống DMOJ (Online Jud
 1. **deploy_icodedn.sh**: Script chính để triển khai toàn bộ hệ thống
 2. **fix_judge_bridge.py**: Script sửa lỗi judge bridge
 3. **fix_static_files.py**: Script sửa lỗi static files
-4. **nginx_icodedn.conf**: File cấu hình Nginx
-5. **setup_ssl.sh**: Script cài đặt SSL với Certbot
-6. **vps_config.sh**: Script tạo các file cấu hình cho VPS
 
 ## Các bước triển khai
 
@@ -45,24 +42,6 @@ Script này sẽ thực hiện các công việc sau:
 - Chạy migrations
 - Sửa lỗi judge bridge và static files
 - Tạo site mặc định
-- Thu thập static files
-- Khởi động lại web service
-
-### 4. Cài đặt SSL
-
-Sau khi triển khai xong, chạy script cài đặt SSL:
-
-```bash
-sudo chmod +x setup_ssl.sh
-sudo ./setup_ssl.sh
-```
-
-Script này sẽ:
-- Cài đặt Nginx (nếu chưa có)
-- Cài đặt Certbot
-- Cấu hình Nginx
-- Lấy chứng chỉ SSL cho icodedn.com và www.icodedn.com
-- Thiết lập tự động gia hạn SSL
 
 ## Cấu trúc thư mục
 
